@@ -23,8 +23,8 @@ jobs:
   deploy:
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@main
     with:
-      lambda-name: external-event-handler
-      deployment-package: external-event-handler.jar
+      lambda-name: external-event-handling
+      deployment-package: external-event-handling.jar
       environment: ${{ github.event.inputs.environment }}
       to-deploy: ${{ github.event.inputs.to-deploy }}
     secrets:
