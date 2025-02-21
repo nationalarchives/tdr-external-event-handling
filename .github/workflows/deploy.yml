@@ -1,4 +1,4 @@
-name: TDR Deploy Notifications Lambda
+name: TDR Deploy External Event Lambda
 on:
   workflow_dispatch:
     inputs:
