@@ -1,7 +1,9 @@
 package uk.gov.nationalarchives.externalevent
 
 class Lambda {
-  def process(): Unit = {
-    println("External Event Handling Lambda called")
+  def process(): String = {
+    val rtn = "External Event Handling Lambda called"
+    println(rtn)
+    rtn
   }
 }
