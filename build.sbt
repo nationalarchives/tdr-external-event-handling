@@ -6,5 +6,9 @@ ThisBuild / organization := "uk.gov.nationalarchives"
 
 lazy val root = (project in file("."))
   .settings(
-    name := "tdr-external-event-handling"
+    name := "tdr-external-event-handling",
+      libraryDependencies ++= Seq(
+      scalaTest % Test,
+      wiremock % Test
+    )
   )
