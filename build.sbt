@@ -8,6 +8,11 @@ lazy val root = (project in file("."))
   .settings(
     name := "tdr-external-event-handling",
       libraryDependencies ++= Seq(
+        awsLambdaCore,
+      awsLambdaEvents,
+        circeCore,
+        circeGeneric,
+        circeParser,
       scalaTest % Test,
       wiremock % Test
     )
