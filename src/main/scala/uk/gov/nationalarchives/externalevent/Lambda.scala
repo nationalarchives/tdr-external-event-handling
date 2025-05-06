@@ -15,19 +15,18 @@ class Lambda extends RequestHandler[SQSEvent, String] {
   override def handleRequest(event: SQSEvent, context: Context): String = {
     val sqsMessages: Seq[SQSMessage] = event.getRecords.asScala.toList
     sqsMessages.map(message => {
-      // Validate event source
+      //TODO Validate event source
       decode[IncomingEvent](message.getBody).map {
 
         case dr2Event: DR2EventDecoder.DR2Event => handleEvent(dr2Event)
-        case _                                  => println("Unrecognised event type") // Throw unrecognised event error
+        case _                                  => println("Unrecognised event type") //TODO Throw unrecognised event error
       }
     })
     "Lambda has run"
   }
 
   def handleEvent[T <: IncomingEvent](incomingEvent: T): Unit = {
-    println(s"Handling event: ${incomingEvent}")
-    // Do something based on event type
+    println(s"Handling event: $incomingEvent")
   }
 
 }

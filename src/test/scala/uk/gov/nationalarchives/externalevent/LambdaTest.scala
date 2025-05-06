@@ -4,7 +4,7 @@ import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import com.amazonaws.services.lambda.runtime.events.SQSEvent.SQSMessage
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import scala.jdk.CollectionConverters.{SeqHasAsJava}
+import scala.jdk.CollectionConverters.SeqHasAsJava
 
 import java.util.UUID
 
@@ -21,13 +21,13 @@ class LambdaTest extends AnyFlatSpec with Matchers {
   {
     "properties": {
       "executionId": "TESTDOC_TDR-2021-CMTP_0",
-      "messageId": "${randomUUID}",
+      "messageId": "$randomUUID",
       "parentMessageId": null,
       "timestamp": "2025-01-31T16:07:49.129278081Z",
       "messageType": "preserve.digital.asset.ingest.complete"
     },
     "parameters": {
-      "assetId": "${randomUUID}",
+      "assetId": "$randomUUID",
       "status": "Asset has been written to custodial copy disk."
     },
     "timestamp": "1738339669217",
@@ -56,5 +56,4 @@ class LambdaTest extends AnyFlatSpec with Matchers {
     sqsMessage.setAwsRegion("eu-west-2")
     sqsMessage
   }
-
 }
