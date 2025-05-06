@@ -9,8 +9,7 @@ object GenericEventDecoder {
     for {
       content <- c.value.as[Json]
     } yield {
-      new GenericEvent(content)
+      GenericEvent(content)
     }
   }
-
 }

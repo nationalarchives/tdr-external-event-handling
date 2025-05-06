@@ -14,7 +14,7 @@ object DR2EventDecoder {
         topic <- c.downField("topicArn").as[String]
 
       } yield {
-        new DR2Event(props, params, time, topic)
+        DR2Event(props, params, time, topic)
       }
     }
   }

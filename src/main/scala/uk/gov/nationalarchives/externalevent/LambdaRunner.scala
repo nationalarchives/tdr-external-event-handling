@@ -47,7 +47,7 @@ object LambdaRunner extends App {
   val message2 = sqsMessage(DR2SQSMessage2)
 
   val inputMessage = new SQSEvent
-  inputMessage.setRecords((List(message1, message2).asJava))
+  inputMessage.setRecords(List(message1, message2).asJava)
 
   new Lambda().handleRequest(inputMessage, null)
 

@@ -10,6 +10,7 @@ import java.util.UUID
 
 class LambdaTest extends AnyFlatSpec with Matchers {
 
+  //TODO move messages and functions to a Utils object
   val genericMessage = """  {
     "messageBody": "This is a generic message"
     }
