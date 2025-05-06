@@ -7,29 +7,6 @@ import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object LambdaRunner extends App {
 
-  val testSQSMessage = s"""
-                       |{
-                       |  "Records": [
-                       |        {
-                       |            "messageId": "messageIdValue1",
-                       |            "receiptHandle": "receipt handle value",
-                       |            "body": "{\\"consignmentReference\\": \\"some-consignment-reference\\",\\"retryCount\\": 0}",
-                       |            "attributes": {
-                       |                "ApproximateReceiveCount": "1",
-                       |                "SentTimestamp": "1545082649183",
-                       |                "SenderId": "senderIdValue",
-                       |                "ApproximateFirstReceiveTimestamp": "1545082649185"
-                       |            },
-                       |            "messageAttributes": {},
-                       |            "md5OfBody": "md5OfBodyValue",
-                       |            "eventSource": "aws:sqs",
-                       |            "eventSourceARN": "queueArn",
-                       |            "awsRegion": "eu-west-2"
-                       |        }
-                       |  ]
-                       |}
-                       |""".stripMargin
-
   val DR2SQSMessage1 = """
   {
     "properties": {
@@ -64,16 +41,6 @@ object LambdaRunner extends App {
     "timestamp": "1738339669217",
     "topicArn": "arn:aws:sqs:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
   }
-  """.stripMargin
-
-  val randommessage1 = """  {
-    "messageBody": "This is Message 1"
-    }
-  """.stripMargin
-
-  val randommessage2 = """  {
-    "messageBody": "This is Message 2"
-    }
   """.stripMargin
 
   val message1 = sqsMessage(DR2SQSMessage1)
