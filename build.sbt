@@ -17,3 +17,10 @@ lazy val root = (project in file("."))
       wiremock % Test
     )
   )
+
+(assembly / assemblyMergeStrategy) := {
+  case PathList("META-INF", xs@_*) => MergeStrategy.discard
+  case _ => MergeStrategy.first
+}
+
+(assembly / assemblyJarName) := "external-event-handling.jar"
