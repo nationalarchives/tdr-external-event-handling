@@ -7,7 +7,7 @@ jobs:
   pre-deploy:
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
     with:
-      lambda-name: external-event-handling
+      lambda-name: external-events-handler
       repo-name: tdr-external-event-handling
       artifact-name: external-event-handling
       build-command: |
