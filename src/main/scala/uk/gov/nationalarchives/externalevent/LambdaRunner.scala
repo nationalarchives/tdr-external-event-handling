@@ -7,7 +7,10 @@ import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object LambdaRunner extends App {
 
-  val DR2SQSMessage1 = """
+  val TestAssetID1 = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  val TestAssetID2 = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+
+  val DR2SQSMessage1 = s"""
   {
     "properties": {
       "executionId": "TESTDOC_TDR-2021-CMTP_0",
@@ -17,7 +20,7 @@ object LambdaRunner extends App {
       "messageType": "preserve.digital.asset.ingest.complete"
     },
     "parameters": {
-      "assetId": "3581f148-1284-46a4-85eb-c3f14d396c24",
+      "assetId": "${TestAssetID1}",
       "status": "Asset has been written to custodial copy disk."
     },
     "timestamp": "1738339669217",
@@ -25,17 +28,17 @@ object LambdaRunner extends App {
   }
   """.stripMargin
 
-  val DR2SQSMessage2 = """
+  val DR2SQSMessage2 = s"""
   {
     "properties": {
       "executionId": "TESTDOC_TDR-2022-CMTP_2",
       "messageId": "cb8c1adc-b7c1-43db-a4cb-cd034a25186e ",
       "parentMessageId": null,
       "timestamp": "2025-03-01T16:07:49.129278081Z",
-      "messageType": "preserve.digital.asset.ingest.complete"
+      "messageType": "preserve.digital.asset.ingest.success"
     },
     "parameters": {
-      "assetId": "102a7a41-4b33-4f65-bace-d92bc3915087",
+      "assetId": "${TestAssetID2}",
       "status": "Asset has been written to custodial copy disk."
     },
     "timestamp": "1738339669217",

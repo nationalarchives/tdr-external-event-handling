@@ -3,7 +3,7 @@ package uk.gov.nationalarchives.externalevent.decoders
 import io.circe.{Decoder, HCursor, Json}
 
 object DR2EventDecoder {
-  case class DR2Event(properties: Json, parameters: Json, timestamp: String, topicArn: String) extends IncomingEvent
+  case class DR2Event(properties: Json, parameters: Json, timestamp: String, topicArn: String, messageType: String, assetId: String) extends IncomingEvent
 
   implicit val decodeDR2Event: Decoder[DR2Event] = new Decoder[DR2Event] {
     final def apply(c: HCursor): Decoder.Result[DR2Event] = {
@@ -12,9 +12,10 @@ object DR2EventDecoder {
         params <- c.downField("parameters").as[Json]
         time <- c.downField("timestamp").as[String]
         topic <- c.downField("topicArn").as[String]
-
+        messageType <- c.downField("properties").downField("messageType").as[String]
+        assetId <- c.downField("parameters").downField("assetId").as[String]
       } yield {
-        DR2Event(props, params, time, topic)
+        DR2Event(props, params, time, topic, messageType, assetId)
       }
     }
   }

@@ -10,9 +10,13 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       awsLambdaCore,
       awsLambdaEvents,
+      s3Utils,
       circeCore,
       circeGeneric,
       circeParser,
+      typesafe,
+      log4catsSlf4j,
+      slf4jSimple,
       scalaTest % Test,
       wiremock % Test
     )
