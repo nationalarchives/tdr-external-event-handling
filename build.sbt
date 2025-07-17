@@ -18,7 +18,10 @@ lazy val root = (project in file("."))
       log4catsSlf4j,
       slf4jSimple,
       scalaTest % Test,
-      wiremock % Test
+      wiremock % Test,
+      mockitoScala,
+      mockitoScalaTest
+
     )
   )
 

@@ -3,6 +3,7 @@ import sbt.*
 object Dependencies {
   private val circeVersion = "0.14.14"
   private val awsUtilsVersion = "0.1.284"
+  private val mockitoScalaVersion = "2.0.0"
 
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.19"
   lazy val wiremock = "com.github.tomakehurst" % "wiremock" % "3.0.1"
@@ -16,4 +17,6 @@ object Dependencies {
   lazy val typesafe = "com.typesafe" % "config" % "1.4.3"
   lazy val log4catsSlf4j = "org.typelevel" %% "log4cats-slf4j" % "2.7.1"
   lazy val slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.17"
+  lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
+  lazy val mockitoScalaTest = "org.mockito" %% "mockito-scala-scalatest" % mockitoScalaVersion
 }

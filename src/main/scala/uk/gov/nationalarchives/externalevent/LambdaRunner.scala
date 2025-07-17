@@ -2,13 +2,17 @@ package uk.gov.nationalarchives.externalevent
 
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import com.amazonaws.services.lambda.runtime.events.SQSEvent.SQSMessage
+import com.amazonaws.services.lambda.runtime.logging.LogLevel
+import com.amazonaws.services.lambda.runtime.{ClientContext, CognitoIdentity, Context, LambdaLogger}
+import org.slf4j.Logger
+import org.slf4j.simple.SimpleLoggerFactory
 
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object LambdaRunner extends App {
 
-  val TestAssetID1 = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-  val TestAssetID2 = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  val TestAssetID1 = "00785757-30a0-4000-8883-adbc5a4f7d05"
+  val TestAssetID2 = "0168387d-98d4-4cde-aadc-2cc0f4203d4cXXXX"
 
   val DR2SQSMessage1 = s"""
   {
@@ -52,7 +56,7 @@ object LambdaRunner extends App {
   val inputMessage = new SQSEvent
   inputMessage.setRecords(List(message1, message2).asJava)
 
-  new Lambda().handleRequest(inputMessage, null)
+  new Lambda().handleRequest(inputMessage, context)
 
   def sqsMessage(message: String): SQSMessage = {
     val sqsMessage = new SQSMessage
@@ -62,4 +66,42 @@ object LambdaRunner extends App {
     sqsMessage.setAwsRegion("eu-west-2")
     sqsMessage
   }
+
+  private def context: Context = new Context {
+    override def getAwsRequestId: String = ""
+    override def getLogGroupName: String = ""
+    override def getLogStreamName: String = ""
+    override def getFunctionName: String = ""
+    override def getFunctionVersion: String = ""
+    override def getInvokedFunctionArn: String = ""
+    override def getIdentity: CognitoIdentity = null
+    override def getClientContext: ClientContext = null
+    override def getRemainingTimeInMillis: Int = 1
+    override def getMemoryLimitInMB: Int = 1
+    override def getLogger: LambdaLogger = TestLogger
+  }
+
+  def TestLogger: LambdaLogger = new LambdaLogger {
+    val logger: Logger = new SimpleLoggerFactory().getLogger(this.getClass.getName)
+
+    override def log(message: String): Unit = {
+      logger.info(message)
+    }
+
+    override def log(message: Array[Byte]): Unit = {
+      logger.info(new String(message))
+    }
+
+    override def log(message: String, logLevel: LogLevel): Unit = {
+      logLevel match {
+        case LogLevel.DEBUG => logger.debug(message)
+        case LogLevel.INFO => logger.info(message)
+        case LogLevel.WARN => logger.warn(message)
+        case LogLevel.ERROR => logger.error(message)
+        case LogLevel.TRACE => logger.trace(message)
+      }
+    }
+
+  }
+
 }
