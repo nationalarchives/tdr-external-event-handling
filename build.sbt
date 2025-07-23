@@ -8,19 +8,19 @@ lazy val root = (project in file("."))
   .settings(
     name := "tdr-external-event-handling",
     libraryDependencies ++= Seq(
+      s3Utils,
       awsLambdaCore,
       awsLambdaEvents,
-      s3Utils,
+      awsLambdaRuntimeClient,
       circeCore,
       circeGeneric,
       circeParser,
       typesafe,
-      log4catsSlf4j,
       slf4jSimple,
       scalaTest % Test,
       wiremock % Test,
-      mockitoScala,
-      mockitoScalaTest
+      mockitoScala % Test,
+      mockitoScalaTest % Test
 
     )
   )

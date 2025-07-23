@@ -16,7 +16,6 @@ object DR2EventHandler {
   private val s3Utils = S3Utils(S3Clients.s3Async(configFactory.getString("s3.endpoint")))
 
   def handleEvent(ev: DR2Event)(implicit logger: LambdaLogger): Unit = {
-
     val tags = ev.messageType match {
       case "preserve.digital.asset.ingest.complete" => Map("PreserveDigitalAssetIngest" -> "Complete")
       case _ => Map("UnknownDR2Message" -> s"${ev.messageType}")
