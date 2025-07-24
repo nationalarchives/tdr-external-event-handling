@@ -53,6 +53,24 @@ object TestUtils {
   }
   """.stripMargin
 
+  val IncorrectDR2MessageType = s"""
+  {
+    "properties": {
+      "executionId": "TESTDOC_TDR-2021-CMTP_0",
+      "messageId": "$randomUUID",
+      "parentMessageId": null,
+      "timestamp": "2025-01-31T16:07:49.129278081Z",
+      "messageType": "preserve.digital.asset.ingest.success"
+    },
+    "parameters": {
+      "assetId": "$randomUUID",
+      "status": "Asset has been written to custodial copy disk."
+    },
+    "timestamp": "1738339669217",
+    "topicArn": "arn:aws:sns:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
+  }
+  """.stripMargin
+
     val IncorrectDR2Message1 = s"""
     {
         "properties": {
@@ -60,7 +78,7 @@ object TestUtils {
         "messageId": "$randomUUID",
         "parentMessageId": null,
         "timestamp": "2025-01-31T16:07:49.129278081Z",
-        "messageType": "preserve.digital.asset.ingest.success"
+        "messageType": "preserve.digital.asset.ingest.complete"
         },
         "details": {
         "assetId": "$randomUUID",
@@ -102,5 +120,7 @@ object TestUtils {
     sqsMessage.setAwsRegion("eu-west-2")
     sqsMessage
   }
+
+
 
 }

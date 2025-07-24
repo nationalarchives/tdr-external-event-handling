@@ -26,6 +26,12 @@ class EventDecoderSpec extends AnyFlatSpec with Matchers {
     decoded.get shouldBe a[DR2EventDecoder.DR2Event]
   }
 
+  "A DR2 Event" should "be decoded when message type has unrecognised content " in {
+    val decoded = decode[IncomingEvent](sqsMessage(IncorrectDR2MessageType).getBody).toOption
+    decoded should not be empty
+    decoded.get shouldBe a[DR2EventDecoder.DR2Event]
+  }
+
   "A DR2 Event" should "not be decoded when message content has incorrect keys" in {
     val decoded = decode[IncomingEvent](sqsMessage(IncorrectDR2Message1).getBody).toOption
     decoded should not be empty
