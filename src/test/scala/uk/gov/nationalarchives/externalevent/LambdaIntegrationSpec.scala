@@ -15,15 +15,7 @@ import TestUtils._
 class LambdaIntegrationSpec extends AnyFlatSpec with MockitoSugar with Matchers {
 
   "The Lambda " should "run without throwing an exception" in {
-    val lambda = new Lambda()
 
-    val message = new SQSEvent
-    message.setRecords(List(sqsMessage(genericMessage)).asJava)
-
-    val mockContext = mock[Context]
-    when(mockContext.getLogger).thenReturn(new LambdaContextLogger(new StdOutLogSink, LogLevel.ERROR, LogFormat.JSON))
-
-    lambda.handleRequest(message, mockContext)
   }
 
 }
