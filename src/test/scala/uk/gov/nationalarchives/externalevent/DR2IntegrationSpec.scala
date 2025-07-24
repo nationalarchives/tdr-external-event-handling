@@ -16,12 +16,22 @@ import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.PutObjectTaggingResponse
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 
-class DR2IntegrationSpec  extends AnyFlatSpec with MockitoSugar with Matchers {
+class DR2IntegrationSpec extends ExternalServicesSpec with MockitoSugar with Matchers {
+
+  "x" should "y" in {
+    mockS3GetResponse()
+    mockS3PutResponse()
+    val mockContext = mock[Context]
+    when(mockContext.getLogger).thenReturn(new LambdaContextLogger(new StdOutLogSink, LogLevel.ERROR, LogFormat.JSON))
+
+    val event:DR2EventDecoder.DR2Event = decode[DR2EventDecoder.DR2Event](sqsMessage(StandardDR2Message).getBody)
+      .getOrElse(throw new RuntimeException("Failed to decode DR2 Event"))
+
+    DR2EventHandler.handleEvent(event)(mockContext.getLogger)
+  }
 
 
-
-
-  "The Lambda " should "try to tag an S3 Object when a DR2 Message is passed" in {
+  "The Lambda" should "try to tag an S3 Object when a DR2 Message is passed" in {
 
     val s3Utils = mock[S3Utils]
     val mockContext = mock[Context]
