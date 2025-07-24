@@ -30,6 +30,15 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
       .withRequestBody(equalToXml(expectedPutTagsRequestXml)))
   }
 
+  "DR2EventHandler" should "apply tags to both file object and corresponding metadata object" in {
+    val ev = runEventHandler(StandardDR2Message)
+
+    wiremockS3.verify(putRequestedFor(urlPathEqualTo(s"/${ev.assetId}"))
+      .withRequestBody(equalToXml(expectedPutTagsRequestXml)))
+    wiremockS3.verify(putRequestedFor(urlPathEqualTo(s"/${ev.assetId}.metadata"))
+      .withRequestBody(equalToXml(expectedPutTagsRequestXml)))
+  }
+
   "DR2EventHandler" should "pass correct tags when a non-standard DR2 Message is processed" in {
     val ev = runEventHandler(NonStandardDR2Message)
 
