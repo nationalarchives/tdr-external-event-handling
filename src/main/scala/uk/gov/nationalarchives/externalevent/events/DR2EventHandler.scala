@@ -17,20 +17,17 @@ object DR2EventHandler {
 
   def handleEvent(ev: DR2Event)(implicit logger: LambdaLogger): Unit = {
     val tags = ev.messageType match {
-      case "preserve.digital.asset.ingest.complete" => Map("PreserveDigitalAssetIngest" -> "Complete")
-      case _ => Map("UnknownDR2Message" -> s"${ev.messageType}")
+      case "preserve.digital.asset.ingest.complete" => Map("PreserveDigitalAssetIngest" -> "Complete") //TODO: Pull from SSM Parameter Store
+      case _                                        => Map("UnknownDR2Message" -> s"${ev.messageType}")
     }
 
-    List(ev.assetId,s"${ev.assetId}.metadata" ).foreach { key =>
-      Try(
-      s3Utils.addObjectTags(bucket, key, tags).attempt.unsafeRunSync() match {
+    List(ev.assetId, s"${ev.assetId}.metadata").foreach { key =>
+      Try(s3Utils.addObjectTags(bucket, key, tags).attempt.unsafeRunSync() match {
         case Left(err) => logger.log(s"Error adding tags to $key: ${err.getMessage}", LogLevel.ERROR)
-        case Right(_) => logger.log(s"Tags added successfully to $key", LogLevel.INFO)
-      }).recover {
-        case e: Exception =>
-          logger.log(s"An error occurred while adding tags to $key: ${e.getMessage}", LogLevel.ERROR)
+        case Right(_)  => logger.log(s"Tags added successfully to $key", LogLevel.INFO)
+      }).recover { case e: Exception =>
+        logger.log(s"An error occurred while adding tags to $key: ${e.getMessage}", LogLevel.ERROR)
       }
     }
   }
-
 }

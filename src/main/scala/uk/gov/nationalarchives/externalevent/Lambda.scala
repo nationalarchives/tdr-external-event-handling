@@ -16,12 +16,12 @@ class Lambda extends RequestHandler[SQSEvent, Unit] {
 
     val logger = context.getLogger
 
-   logger.log("Calling External Events Handler", LogLevel.INFO)
+    logger.log("Calling External Events Handler", LogLevel.INFO)
     val sqsMessages: Seq[SQSMessage] = event.getRecords.asScala.toList
     sqsMessages.foreach(message => {
       decode[IncomingEvent](message.getBody).foreach {
         case dr2Event: DR2EventDecoder.DR2Event => DR2EventHandler.handleEvent(dr2Event)(logger)
-        case _                                  => logger.log("Unrecognised event type", LogLevel.WARN) //TODO Throw unrecognised event error
+        case _                                  => logger.log("Unrecognised event type", LogLevel.WARN) // TODO Throw unrecognised event error
       }
     })
   }

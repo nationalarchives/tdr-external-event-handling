@@ -1,9 +1,13 @@
 package uk.gov.nationalarchives.externalevent
 
+import com.amazonaws.services.lambda.runtime.Context
+import com.amazonaws.services.lambda.runtime.api.client.logging.{LambdaContextLogger, StdOutLogSink}
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import com.amazonaws.services.lambda.runtime.events.SQSEvent.SQSMessage
-import scala.jdk.CollectionConverters.SeqHasAsJava
+import com.amazonaws.services.lambda.runtime.logging.{LogFormat, LogLevel}
+import org.mockito.MockitoSugar._
 
+import scala.jdk.CollectionConverters.SeqHasAsJava
 import java.util.UUID
 
 object TestUtils {
@@ -12,11 +16,11 @@ object TestUtils {
     }
   """.stripMargin
 
-  val NotJSON = "FooBar".stripMargin
+  val notJSON = "NotJson".stripMargin
 
   val randomUUID = UUID.randomUUID().toString
 
-  val StandardDR2Message = s"""
+  val standardDR2Message = s"""
   {
     "properties": {
       "executionId": "TESTDOC_TDR-2021-CMTP_0",
@@ -34,7 +38,7 @@ object TestUtils {
   }
   """.stripMargin
 
-  val NonStandardDR2Message = s"""
+  val nonStandardDR2Message = s"""
   {
     "properties": {
       "executionId": "TESTDOC_TDR-2021-CMTP_1",
@@ -53,7 +57,7 @@ object TestUtils {
   }
   """.stripMargin
 
-  val IncorrectDR2MessageType = s"""
+  val incorrectDR2MessageType = s"""
   {
     "properties": {
       "executionId": "TESTDOC_TDR-2021-CMTP_0",
@@ -71,7 +75,7 @@ object TestUtils {
   }
   """.stripMargin
 
-    val IncorrectDR2Message1 = s"""
+  val incorrectDR2Message1 = s"""
     {
         "properties": {
         "executionId": "TESTDOC_TDR-2021-CMTP_2",
@@ -89,7 +93,7 @@ object TestUtils {
     }
     """.stripMargin
 
-  val IncorrectDR2Message2 = s"""
+  val incorrectDR2Message2 = s"""
     {
         "properties": {
         "executionId": "TESTDOC_TDR-2021-CMTP_2",
@@ -106,9 +110,19 @@ object TestUtils {
     }
     """.stripMargin
 
-  def getSQSEvent(message: String): SQSEvent = {
+  val expectedPutTagsRequestXml: String =
+    """<?xml version="1.0" encoding="UTF-8"?><Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+      |<TagSet><Tag><Key>PreserveDigitalAssetIngest</Key>
+      |<Value>Complete</Value></Tag></TagSet></Tagging>""".stripMargin.replaceAll("\\n", "")
+
+  def unrecognisedPutTagsRequestXml(tagValue: String) : String =
+    s"""<?xml version="1.0" encoding="UTF-8"?><Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+       |<TagSet><Tag><Key>UnknownDR2Message</Key>
+       |<Value>$tagValue</Value></Tag></TagSet></Tagging>""".stripMargin.replaceAll("\\n", "")
+
+  def getSQSEvent(messages: List[String]): SQSEvent = {
     val testMessage = new SQSEvent
-    testMessage.setRecords((List(sqsMessage(message)).asJava))
+    testMessage.setRecords(messages.map(sqsMessage(_)).asJava)
     testMessage
   }
 
@@ -121,6 +135,8 @@ object TestUtils {
     sqsMessage
   }
 
-
-
+  def mockContext: Context = {
+    val mockContext = mock[Context]
+    when(mockContext.getLogger).thenReturn(new LambdaContextLogger(new StdOutLogSink, LogLevel.ERROR, LogFormat.JSON))
+  }
 }

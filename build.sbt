@@ -11,17 +11,16 @@ lazy val root = (project in file("."))
       s3Utils,
       awsLambdaCore,
       awsLambdaEvents,
-      awsLambdaRuntimeClient,
       circeCore,
       circeGeneric,
       circeParser,
       typesafe,
       slf4jSimple,
+      awsLambdaRuntimeClient % Test,
       scalaTest % Test,
       wiremock % Test,
       mockitoScala % Test,
       mockitoScalaTest % Test
-
     )
   )
 
