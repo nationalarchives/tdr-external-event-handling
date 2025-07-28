@@ -11,13 +11,13 @@ import scala.util.Try
 
 object DR2EventHandler {
 
-  private val configFactory: Config = ConfigFactory.load()
-  private val bucket = configFactory.getString("s3.standardBucket")
-  private val s3Utils = S3Utils(S3Clients.s3Async(configFactory.getString("s3.endpoint")))
+  private val config: Config = ConfigFactory.load()
+  private val bucket = config.getString("s3.standardBucket")
+  private val s3Utils = S3Utils(S3Clients.s3Async(config.getString("s3.endpoint")))
 
   def handleEvent(ev: DR2Event)(implicit logger: LambdaLogger): Unit = {
     val tags = ev.messageType match {
-      case "preserve.digital.asset.ingest.complete" => Map("PreserveDigitalAssetIngest" -> "Complete") //TODO: Pull from SSM Parameter Store
+      case "preserve.digital.asset.ingest.complete" => Map(config.getString("tags.dr2IngestKey") -> config.getString("tags.dr2IngestValue"))
       case _                                        => Map("UnknownDR2Message" -> s"${ev.messageType}")
     }
 
