@@ -5,12 +5,16 @@ import com.amazonaws.services.lambda.runtime.api.client.logging.{LambdaContextLo
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import com.amazonaws.services.lambda.runtime.events.SQSEvent.SQSMessage
 import com.amazonaws.services.lambda.runtime.logging.{LogFormat, LogLevel}
+import com.typesafe.config.{Config, ConfigFactory}
 import org.mockito.MockitoSugar._
 
 import scala.jdk.CollectionConverters.SeqHasAsJava
 import java.util.UUID
 
 object TestUtils {
+
+  private val testConfig: Config = ConfigFactory.load()
+
   val genericMessage = """  {
     "messageBody": "This is a generic message"
     }
@@ -111,9 +115,9 @@ object TestUtils {
     """.stripMargin
 
   val expectedPutTagsRequestXml: String =
-    """<?xml version="1.0" encoding="UTF-8"?><Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-      |<TagSet><Tag><Key>PreserveDigitalAssetIngest</Key>
-      |<Value>Complete</Value></Tag></TagSet></Tagging>""".stripMargin.replaceAll("\\n", "")
+    s"""<?xml version="1.0" encoding="UTF-8"?><Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+      |<TagSet><Tag><Key>${testConfig.getString("tags.dr2IngestKey")}</Key>
+      |<Value>${testConfig.getString("tags.dr2IngestValue")}</Value></Tag></TagSet></Tagging>""".stripMargin.replaceAll("\\n", "")
 
   def unrecognisedPutTagsRequestXml(tagValue: String) : String =
     s"""<?xml version="1.0" encoding="UTF-8"?><Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
