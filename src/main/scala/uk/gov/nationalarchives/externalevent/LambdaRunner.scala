@@ -11,8 +11,8 @@ import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object LambdaRunner extends App {
 
-  val TestAssetID1 = "00785757-30a0-4000-8883-adbc5a4f7d05"
-  val TestAssetID2 = "0168387d-98d4-4cde-aadc-2cc0f4203d4cXXXX"
+  val TestAssetID1 = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  val TestAssetID2 = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 
   val DR2SQSMessage1 = s"""
   {
