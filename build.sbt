@@ -8,15 +8,25 @@ lazy val root = (project in file("."))
   .settings(
     name := "tdr-external-event-handling",
     libraryDependencies ++= Seq(
+      s3Utils,
       awsLambdaCore,
       awsLambdaEvents,
       circeCore,
       circeGeneric,
       circeParser,
+      typesafe,
+      slf4jSimple,
+      awsLambdaRuntimeClient % Test,
       scalaTest % Test,
-      wiremock % Test
+      wiremock % Test,
+      mockitoScala % Test,
+      mockitoScalaTest % Test
     )
   )
+
+(Test / fork) := true
+(Test / javaOptions) += s"-Dconfig.file=${sourceDirectory.value}/test/resources/application.conf"
+(Test / envVars) := Map("AWS_ACCESS_KEY_ID" -> "test", "AWS_SECRET_ACCESS_KEY" -> "test")
 
 (assembly / assemblyMergeStrategy) := {
   case PathList("META-INF", xs@_*) => MergeStrategy.discard
