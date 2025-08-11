@@ -17,14 +17,16 @@ object APIHandler {
       token: BearerAccessToken,
       variables: Variables
   )(implicit executionContext: ExecutionContext): Future[Data] = {
-    graphQlClient
+    val resp = graphQlClient
       .getResult(token, document, Some(variables))
       .flatMap(result =>
         result.errors match {
           case Nil                                 => Future.successful(result.data.get)
           case List(authError: NotAuthorisedError) => Future.failed(new AuthorisationException(authError.message))
           case errors                              => Future.failed(new GraphQlException(errors))
-        })}
+        })
+    resp
+  }
 }
 
 class AuthorisationException(message: String) extends Exception(message)

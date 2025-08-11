@@ -8,7 +8,8 @@ import graphql.codegen.types._
 import uk.gov.nationalarchives.aws.utils.ssm.{SSMClients, SSMUtils}
 
 import java.util.UUID
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.duration.DurationInt
 import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend}
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.externalevent.utils.APIHandler.sendApiRequest
@@ -22,14 +23,17 @@ class GraphQlApi(val config: Config, val keycloak: KeycloakUtils, addFileStatusC
 
   private val ssmUtils = SSMUtils(SSMClients.ssm(config.getString("ssm.endpoint")))
 
-  def updateFileStatus(assetId: String, statusType: String, statusValue: String)(implicit ec: ExecutionContext): Future[amfs.Data] = {
-    keycloak.serviceAccountToken(
-        config.getString("auth.clientId"),
-        ssmUtils.getParameterValue(config.getString("auth.clientSecretPath"))
-      ).flatMap { token =>
-        val fileStatusInput = AddMultipleFileStatusesInput(List(AddFileStatusInput(UUID.fromString(assetId), statusType, statusValue)))
-        sendApiRequest(addFileStatusClient, amfs.document, token, amfs.Variables(fileStatusInput))
-    }}
+  def updateFileStatus(assetId: String, statusType: String, statusValue: String)(implicit ec: ExecutionContext): amfs.Data = {
+    println("UpdateFileStatus")
+    val result = for {
+      token <- keycloak.serviceAccountToken(config.getString("auth.clientId"), ssmUtils.getParameterValue(config.getString("auth.clientSecretPath")))
+      _ = println("Creating fileStatusInput")
+      fileStatusInput = AddMultipleFileStatusesInput(List(AddFileStatusInput(UUID.fromString(assetId), statusType, statusValue)))
+      _ = println("Calling sendApiRequest")
+      response <- sendApiRequest(addFileStatusClient, amfs.document, token, amfs.Variables(fileStatusInput))
+    } yield response
+    Await.result(result, 5.seconds)
+  }
 }
 
 object GraphQlApi {
