@@ -13,7 +13,7 @@ object Dependencies {
   lazy val circeCore = "io.circe" %% "circe-core" % circeVersion
   lazy val circeGeneric = "io.circe" %% "circe-generic" % circeVersion
   lazy val circeParser = "io.circe" %% "circe-parser" % circeVersion
-  lazy val typesafe = "com.typesafe" % "config" % "1.4.3"
+  lazy val typesafe = "com.typesafe" % "config" % "1.4.4"
   lazy val slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.17"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.19"
   lazy val wiremock = "com.github.tomakehurst" % "wiremock" % "3.0.1"
