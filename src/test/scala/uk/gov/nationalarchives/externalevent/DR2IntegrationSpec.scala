@@ -5,6 +5,8 @@ import io.circe.parser.decode
 import uk.gov.nationalarchives.externalevent.decoders._
 import uk.gov.nationalarchives.externalevent.events._
 import com.github.tomakehurst.wiremock.client.WireMock._
+
+import scala.jdk.CollectionConverters.ListHasAsScala
 import TestUtils._
 
 class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
@@ -12,65 +14,90 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
   "Lambda" should "correctly handle a DR2 message" in {
     mockS3GetResponse()
     mockS3PutResponse()
+    authOk()
+    graphqlOkJson()
 
-    new Lambda().handleRequest(
-      getSQSEvent(List(standardDR2Message)),
-      mockContext)
+    new Lambda().handleRequest(getSQSEvent(List(standardDR2Message)), mockContext)
 
-    wiremockS3.verify(putRequestedFor(anyUrl())
-      .withRequestBody(equalToXml(expectedPutTagsRequestXml)))
+    wiremockS3.verify(
+      putRequestedFor(anyUrl())
+        .withRequestBody(equalToXml(expectedPutTagsRequestXml))
+    )
   }
 
   "Lambda" should "correctly handle multiple DR2 messages" in {
     mockS3GetResponse()
     mockS3PutResponse()
+    authOk()
+    graphqlOkJson()
 
-    new Lambda().handleRequest(
-      getSQSEvent(List(standardDR2Message, nonStandardDR2Message)),
-      mockContext)
+    new Lambda().handleRequest(getSQSEvent(List(standardDR2Message, nonStandardDR2Message)), mockContext)
 
-    wiremockS3.verify(4, putRequestedFor(anyUrl())
-      .withRequestBody(equalToXml(expectedPutTagsRequestXml)))
+    wiremockS3.verify(
+      4,
+      putRequestedFor(anyUrl())
+        .withRequestBody(equalToXml(expectedPutTagsRequestXml))
+    )
   }
 
   "DR2EventHandler" should "pass correct tags when a standard DR2 Message is processed" in {
     val ev = runEventHandler(standardDR2Message)
 
-    wiremockS3.verify(putRequestedFor(urlPathEqualTo(s"/${ev.assetId}"))
-      .withRequestBody(equalToXml(expectedPutTagsRequestXml)))
+    wiremockS3.verify(
+      putRequestedFor(urlPathEqualTo(s"/${ev.assetId}"))
+        .withRequestBody(equalToXml(expectedPutTagsRequestXml))
+    )
   }
 
   "DR2EventHandler" should "apply tags to both file object and corresponding metadata object" in {
     val ev = runEventHandler(standardDR2Message)
 
-    wiremockS3.verify(putRequestedFor(urlPathEqualTo(s"/${ev.assetId}"))
-      .withRequestBody(equalToXml(expectedPutTagsRequestXml)))
-    wiremockS3.verify(putRequestedFor(urlPathEqualTo(s"/${ev.assetId}.metadata"))
-      .withRequestBody(equalToXml(expectedPutTagsRequestXml)))
+    wiremockS3.verify(
+      putRequestedFor(urlPathEqualTo(s"/${ev.assetId}"))
+        .withRequestBody(equalToXml(expectedPutTagsRequestXml))
+    )
+    wiremockS3.verify(
+      putRequestedFor(urlPathEqualTo(s"/${ev.assetId}.metadata"))
+        .withRequestBody(equalToXml(expectedPutTagsRequestXml))
+    )
   }
 
   "DR2EventHandler" should "pass correct tags when a non-standard DR2 Message is processed" in {
     val ev = runEventHandler(nonStandardDR2Message)
 
-    wiremockS3.verify(putRequestedFor(urlPathEqualTo(s"/${ev.assetId}"))
-      .withRequestBody(equalToXml(expectedPutTagsRequestXml)))
+    wiremockS3.verify(
+      putRequestedFor(urlPathEqualTo(s"/${ev.assetId}"))
+        .withRequestBody(equalToXml(expectedPutTagsRequestXml))
+    )
   }
 
   "DR2EventHandler" should "pass alternative tags when a DR2 Message has an unrecognised message type" in {
     val ev = runEventHandler(incorrectDR2MessageType)
 
-    wiremockS3.verify(putRequestedFor(urlPathEqualTo(s"/${ev.assetId}"))
-      .withRequestBody(equalToXml(unrecognisedPutTagsRequestXml(ev.messageType))))
+    wiremockS3.verify(
+      putRequestedFor(urlPathEqualTo(s"/${ev.assetId}"))
+        .withRequestBody(equalToXml(unrecognisedPutTagsRequestXml(ev.messageType)))
+    )
   }
 
-  def runEventHandler(eventType: String): DR2EventDecoder.DR2Event = {
+  "DR2EventHandler" should "send a file status update to the API" in {
+    authOk()
+    graphqlOkJson()
+    runEventHandler(standardDR2Message, true)
+
+    val serveEvents = wiremockGraphql.getAllServeEvents.asScala
+    serveEvents.size should equal(1)
+    serveEvents.count(_.getRequest.getBodyAsString.contains("addMultipleFileStatuses")) should equal(1)
+  }
+
+  def runEventHandler(eventType: String, updateFileStatus: Boolean = false): DR2EventDecoder.DR2Event = {
     mockS3GetResponse()
     mockS3PutResponse()
 
     val ev = decode[DR2EventDecoder.DR2Event](sqsMessage(eventType).getBody)
-      .getOrElse(throw new RuntimeException(s"Failed to decode DR2 Event of type: $eventType")) //TODO: Remove exception
+      .getOrElse(throw new RuntimeException(s"Failed to decode DR2 Event of type: $eventType")) // TODO: Remove exception
 
-    DR2EventHandler.handleEvent(ev)(mockContext.getLogger)
+    DR2EventHandler.handleEvent(ev, updateFileStatus)(mockContext.getLogger)
     ev
   }
 }
