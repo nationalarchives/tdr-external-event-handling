@@ -24,12 +24,9 @@ class GraphQlApi(val config: Config, val keycloak: KeycloakUtils, addFileStatusC
   private val ssmUtils = SSMUtils(SSMClients.ssm(config.getString("ssm.endpoint")))
 
   def updateFileStatus(assetId: String, statusType: String, statusValue: String)(implicit ec: ExecutionContext): amfs.Data = {
-    println("UpdateFileStatus")
     val result = for {
       token <- keycloak.serviceAccountToken(config.getString("auth.clientId"), ssmUtils.getParameterValue(config.getString("auth.clientSecretPath")))
-      _ = println("Creating fileStatusInput")
       fileStatusInput = AddMultipleFileStatusesInput(List(AddFileStatusInput(UUID.fromString(assetId), statusType, statusValue)))
-      _ = println("Calling sendApiRequest")
       response <- sendApiRequest(addFileStatusClient, amfs.document, token, amfs.Variables(fileStatusInput))
     } yield response
     Await.result(result, 5.seconds)

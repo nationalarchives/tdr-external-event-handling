@@ -42,9 +42,7 @@ object DR2EventHandler {
       implicit val ec: ExecutionContext = ExecutionContext.global
       logger.log(s"Updating file status for asset $assetId with type $statusType and value $statusValue", LogLevel.INFO)
       val graphQlApi: GraphQlApi = GraphQlApi(config)(logger)
-      println("Before updateFileStatus")
       val resp = graphQlApi.updateFileStatus(assetId, statusType, statusValue)
-      println("After updateFileStatus")
       resp
     } else amfs.Data(List.empty)
   }
