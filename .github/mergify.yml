@@ -17,4 +17,6 @@ pull_request_rules:
         type: APPROVE
         message: Automatically approving Scala Steward
       queue:
-        name: default
+        name: defaultmerge_queue:
+  max_parallel_checks: 1
+
