@@ -114,12 +114,26 @@ object TestUtils {
     }
     """.stripMargin
 
+  val expectedFileStatusResponse: String = s"""
+    {
+      "data": {
+        "addMultipleFileStatuses": [
+          {
+            "fileId": "$randomUUID",
+            "statusType": "${testConfig.getString("tags.dr2IngestKey")}",
+            "statusValue": "${testConfig.getString("tags.dr2IngestValue")}"
+          }
+        ]
+      }
+    }
+    """.stripMargin
+
   val expectedPutTagsRequestXml: String =
     s"""<?xml version="1.0" encoding="UTF-8"?><Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
       |<TagSet><Tag><Key>${testConfig.getString("tags.dr2IngestKey")}</Key>
       |<Value>${testConfig.getString("tags.dr2IngestValue")}</Value></Tag></TagSet></Tagging>""".stripMargin.replaceAll("\\n", "")
 
-  def unrecognisedPutTagsRequestXml(tagValue: String) : String =
+  def unrecognisedPutTagsRequestXml(tagValue: String): String =
     s"""<?xml version="1.0" encoding="UTF-8"?><Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
        |<TagSet><Tag><Key>UnknownDR2Message</Key>
        |<Value>$tagValue</Value></Tag></TagSet></Tagging>""".stripMargin.replaceAll("\\n", "")

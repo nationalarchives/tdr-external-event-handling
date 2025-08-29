@@ -8,7 +8,11 @@ lazy val root = (project in file("."))
   .settings(
     name := "tdr-external-event-handling",
     libraryDependencies ++= Seq(
+      authUtils,
       s3Utils,
+      ssmUtils,
+      graphqlClient,
+      generatedGraphql,
       awsLambdaCore,
       awsLambdaEvents,
       circeCore,
