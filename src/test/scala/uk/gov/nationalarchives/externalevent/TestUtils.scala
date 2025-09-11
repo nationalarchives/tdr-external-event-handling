@@ -26,7 +26,6 @@ object TestUtils {
 
   val standardDR2Message = s"""
   {
-    "body": {
       "properties": {
         "executionId": "TESTDOC_TDR-2021-CMTP_0",
         "messageId": "$randomUUID",
@@ -38,50 +37,39 @@ object TestUtils {
         "assetId": "$randomUUID",
         "status": "Asset has been written to custodial copy disk."
       }
-    },
-    "timestamp": "1738339669217",
-    "topicArn": "arn:aws:sns:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
   }
   """.stripMargin
 
   val nonStandardDR2Message = s"""
   {
-    "body": {
-      "properties": {
-        "executionId": "TESTDOC_TDR-2021-CMTP_1",
-        "messageId": "$randomUUID",
-        "parentMessageId": null,
-        "timestamp": "2025-01-31T16:07:49.129278081Z",
-        "messageType": "preserve.digital.asset.ingest.complete",
-        "extraField": "This is an extra field not in the standard message"
-      },
-      "parameters": {
-        "assetId": "$randomUUID",
-        "status": "Asset has been written to custodial copy disk."
-      }
+    "properties": {
+      "executionId": "TESTDOC_TDR-2021-CMTP_1",
+      "messageId": "$randomUUID",
+      "parentMessageId": null,
+      "timestamp": "2025-01-31T16:07:49.129278081Z",
+      "messageType": "preserve.digital.asset.ingest.complete",
+      "extraField": "This is an extra field not in the standard message"
     },
-    "timestamp": "1738339669217",
-    "topicArn": "arn:aws:sns:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
+    "parameters": {
+      "assetId": "$randomUUID",
+      "status": "Asset has been written to custodial copy disk."
+    }
   }
   """.stripMargin
 
   val incorrectDR2MessageType = s"""
   {
-    "body": {
-      "properties": {
-        "executionId": "TESTDOC_TDR-2021-CMTP_0",
-        "messageId": "$randomUUID",
-        "parentMessageId": null,
-        "timestamp": "2025-01-31T16:07:49.129278081Z",
-        "messageType": "preserve.digital.asset.ingest.success"
-      },
-      "parameters": {
-        "assetId": "$randomUUID",
-        "status": "Asset has been written to custodial copy disk."
-      }
+    "properties": {
+      "executionId": "TESTDOC_TDR-2021-CMTP_0",
+      "messageId": "$randomUUID",
+      "parentMessageId": null,
+      "timestamp": "2025-01-31T16:07:49.129278081Z",
+      "messageType": "preserve.digital.asset.ingest.success"
     },
-    "timestamp": "1738339669217",
-    "topicArn": "arn:aws:sns:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
+    "parameters": {
+      "assetId": "$randomUUID",
+      "status": "Asset has been written to custodial copy disk."
+    }
   }
   """.stripMargin
 
