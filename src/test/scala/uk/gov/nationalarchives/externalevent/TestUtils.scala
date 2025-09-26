@@ -26,19 +26,17 @@ object TestUtils {
 
   val standardDR2Message = s"""
   {
-    "properties": {
-      "executionId": "TESTDOC_TDR-2021-CMTP_0",
-      "messageId": "$randomUUID",
-      "parentMessageId": null,
-      "timestamp": "2025-01-31T16:07:49.129278081Z",
-      "messageType": "preserve.digital.asset.ingest.complete"
-    },
-    "parameters": {
-      "assetId": "$randomUUID",
-      "status": "Asset has been written to custodial copy disk."
-    },
-    "timestamp": "1738339669217",
-    "topicArn": "arn:aws:sns:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
+      "properties": {
+        "executionId": "TESTDOC_TDR-2021-CMTP_0",
+        "messageId": "$randomUUID",
+        "parentMessageId": null,
+        "timestamp": "2025-01-31T16:07:49.129278081Z",
+        "messageType": "preserve.digital.asset.ingest.complete"
+      },
+      "parameters": {
+        "assetId": "$randomUUID",
+        "status": "Asset has been written to custodial copy disk."
+      }
   }
   """.stripMargin
 
@@ -55,9 +53,7 @@ object TestUtils {
     "parameters": {
       "assetId": "$randomUUID",
       "status": "Asset has been written to custodial copy disk."
-    },
-    "timestamp": "1738339669217",
-    "topicArn": "arn:aws:sns:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
+    }
   }
   """.stripMargin
 
@@ -73,14 +69,13 @@ object TestUtils {
     "parameters": {
       "assetId": "$randomUUID",
       "status": "Asset has been written to custodial copy disk."
-    },
-    "timestamp": "1738339669217",
-    "topicArn": "arn:aws:sns:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
+    }
   }
   """.stripMargin
 
   val incorrectDR2Message1 = s"""
     {
+      "body": {
         "properties": {
         "executionId": "TESTDOC_TDR-2021-CMTP_2",
         "messageId": "$randomUUID",
@@ -91,14 +86,16 @@ object TestUtils {
         "details": {
         "assetId": "$randomUUID",
         "status": "Asset has been written to custodial copy disk."
-        },
-        "timestamp": "1738339669217",
-        "topicArn": "arn:aws:sns:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
+        }
+      },
+      "timestamp": "1738339669217",
+      "topicArn": "arn:aws:sns:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
     }
     """.stripMargin
 
   val incorrectDR2Message2 = s"""
     {
+      "body": {
         "properties": {
         "executionId": "TESTDOC_TDR-2021-CMTP_2",
         "messageId": "$randomUUID",
@@ -108,9 +105,10 @@ object TestUtils {
         "parameters": {
         "assetId": "$randomUUID",
         "status": "Asset has been written to custodial copy disk."
-        },
-        "timestamp": "1738339669217",
-        "topicArn": "arn:aws:sns:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
+        }
+      },
+      "timestamp": "1738339669217",
+      "topicArn": "arn:aws:sns:eu-west-2:XXXXXXXXXXXX:intg-dr2-notifications"
     }
     """.stripMargin
 
