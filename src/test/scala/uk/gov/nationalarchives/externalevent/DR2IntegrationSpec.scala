@@ -19,7 +19,7 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
     graphqlOkJson()
 
     new Lambda().handleRequest(getSQSEvent(List(standardDR2Message)), mockContext)
-    
+
     wiremockS3.verify(
       putRequestedFor(urlMatching(".*\\?tagging"))
         .withRequestBody(equalToXml(expectedPutTagsRequestXml))
