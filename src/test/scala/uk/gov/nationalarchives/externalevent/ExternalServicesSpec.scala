@@ -1,17 +1,21 @@
 package uk.gov.nationalarchives.externalevent
 
 import com.github.tomakehurst.wiremock.WireMockServer
-import com.github.tomakehurst.wiremock.client.WireMock.{anyUrl, containing, get, ok, okJson, post, put, serverError, urlEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, anyUrl, containing, equalTo, get, ok, okJson, post, put, serverError, urlEqualTo, urlMatching, urlPathEqualTo}
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import TestUtils._
-
-
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 
 class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with BeforeAndAfterAll {
   val wiremockS3 = new WireMockServer(8003)
-  val wiremockGraphql = new WireMockServer(9001)
+  val expectedFileStatusResponseTransformer = new ExpectedFileStatusResponseTransformer()
+  val wiremockGraphql = new WireMockServer(
+    wireMockConfig()
+      .port(9001)
+      .extensions(expectedFileStatusResponseTransformer)
+  )  
   val wiremockAuth = new WireMockServer(9002)
   val wiremockSsm = new WireMockServer(9003)
 
@@ -43,8 +47,25 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
     wiremockAuth.resetAll()
   }
 
-  def mockS3GetResponse(): StubMapping = {
-    wiremockS3.stubFor(get(anyUrl()).willReturn(ok()))
+  def mockS3ListResponse(prefix: String, files: List[String]): StubMapping = {
+    val fullKeys = if (prefix.isEmpty) files else files.map(f => s"$prefix/$f") ++ Seq(s"$prefix/$prefix.metadata")
+    val listResponseXml =
+      s"""<?xml version="1.0" encoding="UTF-8"?>
+         |<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+         |  ${fullKeys.map(key => s"<Contents><Key>$key</Key></Contents>").mkString("\n")}
+         |</ListBucketResult>""".stripMargin
+
+    wiremockS3.stubFor(
+      get(urlPathEqualTo("/"))
+        .withQueryParam("list-type", equalTo("2"))
+        .willReturn(ok(listResponseXml).withHeader("Content-Type", "application/xml"))
+    )
+  }
+  def mockS3GetTaggingResponse(): StubMapping = {
+    wiremockS3.stubFor(
+      get(urlMatching(".*\\?tagging"))
+        .willReturn(ok("<Tagging></Tagging>").withHeader("Content-Type", "application/xml"))
+    )
   }
 
   def mockS3PutResponse(): StubMapping = {
@@ -61,7 +82,11 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
   def graphqlOkJson(): StubMapping = {
     wiremockGraphql.stubFor(post(urlEqualTo(graphQlPath))
       .withRequestBody(containing("addMultipleFileStatuses"))
-      .willReturn(okJson(expectedFileStatusResponse)))
+      .willReturn(aResponse()
+        .withStatus(200)
+        .withHeader("Content-Type", "application/json")
+        .withBody("""{"data":{"addMultipleFileStatuses":[{"fileId":"{{jsonPath request.body '$.variables.input[0].fileId'}}","statusType":"PreserveDigitalAssetIngest","statusValue":"Complete"}]}}""")
+        .withTransformers("expected-file-status-response-transformer")))
   }
 
   def authOk(): StubMapping = wiremockAuth.stubFor(post(urlEqualTo(authPath))
