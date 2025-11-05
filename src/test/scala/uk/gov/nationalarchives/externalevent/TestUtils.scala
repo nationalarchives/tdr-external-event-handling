@@ -5,8 +5,12 @@ import com.amazonaws.services.lambda.runtime.api.client.logging.{LambdaContextLo
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import com.amazonaws.services.lambda.runtime.events.SQSEvent.SQSMessage
 import com.amazonaws.services.lambda.runtime.logging.{LogFormat, LogLevel}
+import com.github.tomakehurst.wiremock.extension.ResponseTransformerV2
+import com.github.tomakehurst.wiremock.http.Response
+import com.github.tomakehurst.wiremock.stubbing.ServeEvent
 import com.typesafe.config.{Config, ConfigFactory}
 import org.mockito.MockitoSugar._
+import io.circe.parser._
 
 import scala.jdk.CollectionConverters.SeqHasAsJava
 import java.util.UUID
@@ -22,19 +26,24 @@ object TestUtils {
 
   val notJSON = "NotJson".stripMargin
 
-  val randomUUID = UUID.randomUUID().toString
+  val messageUUID = UUID.randomUUID().toString
+  val prefixUUID = UUID.randomUUID().toString
+  
+  val file1UUID = UUID.randomUUID().toString
+  val file2UUID = UUID.randomUUID().toString
+  val file3UUID = UUID.randomUUID().toString
 
   val standardDR2Message = s"""
   {
       "properties": {
         "executionId": "TESTDOC_TDR-2021-CMTP_0",
-        "messageId": "$randomUUID",
+        "messageId": "$messageUUID",
         "parentMessageId": null,
         "timestamp": "2025-01-31T16:07:49.129278081Z",
         "messageType": "preserve.digital.asset.ingest.complete"
       },
       "parameters": {
-        "assetId": "$randomUUID",
+        "assetId": "$prefixUUID",
         "status": "Asset has been written to custodial copy disk."
       }
   }
@@ -44,14 +53,14 @@ object TestUtils {
   {
     "properties": {
       "executionId": "TESTDOC_TDR-2021-CMTP_1",
-      "messageId": "$randomUUID",
+      "messageId": "$messageUUID",
       "parentMessageId": null,
       "timestamp": "2025-01-31T16:07:49.129278081Z",
       "messageType": "preserve.digital.asset.ingest.complete",
       "extraField": "This is an extra field not in the standard message"
     },
     "parameters": {
-      "assetId": "$randomUUID",
+      "assetId": "$prefixUUID",
       "status": "Asset has been written to custodial copy disk."
     }
   }
@@ -61,13 +70,13 @@ object TestUtils {
   {
     "properties": {
       "executionId": "TESTDOC_TDR-2021-CMTP_0",
-      "messageId": "$randomUUID",
+      "messageId": "$messageUUID",
       "parentMessageId": null,
       "timestamp": "2025-01-31T16:07:49.129278081Z",
       "messageType": "preserve.digital.asset.ingest.success"
     },
     "parameters": {
-      "assetId": "$randomUUID",
+      "assetId": "$prefixUUID",
       "status": "Asset has been written to custodial copy disk."
     }
   }
@@ -78,13 +87,13 @@ object TestUtils {
       "body": {
         "properties": {
         "executionId": "TESTDOC_TDR-2021-CMTP_2",
-        "messageId": "$randomUUID",
+        "messageId": "$prefixUUID",
         "parentMessageId": null,
         "timestamp": "2025-01-31T16:07:49.129278081Z",
         "messageType": "preserve.digital.asset.ingest.complete"
         },
         "details": {
-        "assetId": "$randomUUID",
+        "assetId": "$prefixUUID",
         "status": "Asset has been written to custodial copy disk."
         }
       },
@@ -98,12 +107,12 @@ object TestUtils {
       "body": {
         "properties": {
         "executionId": "TESTDOC_TDR-2021-CMTP_2",
-        "messageId": "$randomUUID",
+        "messageId": "$prefixUUID",
         "parentMessageId": null,
         "timestamp": "2025-01-31T16:07:49.129278081Z",
         },
         "parameters": {
-        "assetId": "$randomUUID",
+        "assetId": "$prefixUUID",
         "status": "Asset has been written to custodial copy disk."
         }
       },
@@ -112,12 +121,12 @@ object TestUtils {
     }
     """.stripMargin
 
-  val expectedFileStatusResponse: String = s"""
+  def expectedFileStatusResponse(fileUUID: String): String = s"""
     {
       "data": {
         "addMultipleFileStatuses": [
           {
-            "fileId": "$randomUUID",
+            "fileId": "$fileUUID",
             "statusType": "${testConfig.getString("tags.dr2IngestKey")}",
             "statusValue": "${testConfig.getString("tags.dr2IngestValue")}"
           }
@@ -154,5 +163,37 @@ object TestUtils {
   def mockContext: Context = {
     val mockContext = mock[Context]
     when(mockContext.getLogger).thenReturn(new LambdaContextLogger(new StdOutLogSink, LogLevel.ERROR, LogFormat.JSON))
+  }
+
+  class ExpectedFileStatusResponseTransformer extends ResponseTransformerV2 {
+    override def transform(response: Response, serveEvent: ServeEvent): Response = {
+      val requestBody = serveEvent.getRequest.getBodyAsString
+
+      val fileIdOpt = parse(requestBody).toOption.flatMap { json =>
+        json.hcursor
+          .downField("variables")
+          .downField("addMultipleFileStatusesInput")
+          .downField("statuses")
+          .downArray
+          .downField("fileId")
+          .as[String]
+          .toOption
+      }
+
+      fileIdOpt match {
+        case Some(fileId) =>
+          val responseBody = expectedFileStatusResponse(fileId)
+          Response.Builder.like(response)
+            .but()
+            .body(responseBody)
+            .build()
+        case None =>
+          response
+      }
+    }
+
+    override def getName: String = "expected-file-status-response-transformer"
+
+    override def applyGlobally(): Boolean = false
   }
 }
