@@ -15,7 +15,7 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
     wireMockConfig()
       .port(9001)
       .extensions(expectedFileStatusResponseTransformer)
-  )  
+  )
   val wiremockAuth = new WireMockServer(9002)
   val wiremockSsm = new WireMockServer(9003)
 
@@ -80,17 +80,25 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
   }
 
   def graphqlOkJson(): StubMapping = {
-    wiremockGraphql.stubFor(post(urlEqualTo(graphQlPath))
-      .withRequestBody(containing("addMultipleFileStatuses"))
-      .willReturn(aResponse()
-        .withStatus(200)
-        .withHeader("Content-Type", "application/json")
-        .withBody("""{"data":{"addMultipleFileStatuses":[{"fileId":"{{jsonPath request.body '$.variables.input[0].fileId'}}","statusType":"PreserveDigitalAssetIngest","statusValue":"Complete"}]}}""")
-        .withTransformers("expected-file-status-response-transformer")))
+    wiremockGraphql.stubFor(
+      post(urlEqualTo(graphQlPath))
+        .withRequestBody(containing("addMultipleFileStatuses"))
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withHeader("Content-Type", "application/json")
+            .withBody(
+              """{"data":{"addMultipleFileStatuses":[{"fileId":"{{jsonPath request.body '$.variables.input[0].fileId'}}","statusType":"PreserveDigitalAssetIngest","statusValue":"Complete"}]}}"""
+            )
+            .withTransformers("expected-file-status-response-transformer")
+        )
+    )
   }
 
-  def authOk(): StubMapping = wiremockAuth.stubFor(post(urlEqualTo(authPath))
-    .willReturn(okJson("""{"access_token": "valid-token"}""")))
+  def authOk(): StubMapping = wiremockAuth.stubFor(
+    post(urlEqualTo(authPath))
+      .willReturn(okJson("""{"access_token": "valid-token"}"""))
+  )
 
   def authUnavailable(): StubMapping = wiremockAuth.stubFor(post(urlEqualTo(authPath)).willReturn(serverError()))
   def graphqlUnavailable(): StubMapping = wiremockGraphql.stubFor(post(urlEqualTo(graphQlPath)).willReturn(serverError()))

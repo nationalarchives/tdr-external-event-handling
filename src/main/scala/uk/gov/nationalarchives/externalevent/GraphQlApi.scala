@@ -19,7 +19,7 @@ class GraphQlApi(val config: Config, val keycloak: KeycloakUtils, addFileStatusC
     keycloakDeployment: TdrKeycloakDeployment,
     backend: SttpBackend[Identity, Any]
 ) {
-  implicit class ErrorUtils[D](response: GraphQlResponse[D]) { val errorString: String = response.errors.map(_.message).mkString("\n")}
+  implicit class ErrorUtils[D](response: GraphQlResponse[D]) { val errorString: String = response.errors.map(_.message).mkString("\n") }
 
   private val ssmUtils = SSMUtils(SSMClients.ssm(config.getString("ssm.endpoint")))
 
