@@ -48,7 +48,6 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
       putRequestedFor(urlMatching(".*\\?tagging"))
     )
   }
-  
 
   "DR2EventHandler" should "apply tags to all files at location including metadata file on receipt of a standard DR2 message" in {
     val files = List(file1UUID, file2UUID, file3UUID)
@@ -58,7 +57,7 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
     authOk()
     graphqlOkJson()
     val ev = runEventHandler(standardDR2Message)
-    
+
     (files ++ Seq(s"$prefixUUID.metadata")).foreach { file =>
       wiremockS3.verify(
         putRequestedFor(urlMatching(s"/${ev.assetId}/$file\\?tagging"))
@@ -83,7 +82,7 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
       )
     }
   }
-  
+
   "DR2EventHandler" should "pass alternative tags when a DR2 Message has an unrecognised message type" in {
     val files = List(file1UUID, file2UUID, file3UUID)
     mockS3ListResponse(prefix = prefixUUID, files = List(file1UUID, file2UUID, file3UUID))
@@ -91,7 +90,7 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
     mockS3PutResponse()
     authOk()
     graphqlOkJson()
-    
+
     val ev = runEventHandler(incorrectDR2MessageType)
 
     (files ++ Seq(s"$prefixUUID.metadata")).foreach { file =>
@@ -113,8 +112,8 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
 
     val serveEvents = wiremockGraphql.getAllServeEvents.asScala
     val fileStatusUpdates = serveEvents.filter(_.getRequest.getBodyAsString.contains("addMultipleFileStatuses"))
-    fileStatusUpdates.size should be (3)
-    files.foreach(file => fileStatusUpdates.count(_.getRequest.getBodyAsString.contains(file)) should be (1))
+    fileStatusUpdates.size should be(3)
+    files.foreach(file => fileStatusUpdates.count(_.getRequest.getBodyAsString.contains(file)) should be(1))
   }
 
   def runEventHandler(eventType: String, updateFileStatus: Boolean = false): DR2EventDecoder.DR2Event = {

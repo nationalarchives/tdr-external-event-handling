@@ -28,7 +28,7 @@ object TestUtils {
 
   val messageUUID = UUID.randomUUID().toString
   val prefixUUID = UUID.randomUUID().toString
-  
+
   val file1UUID = UUID.randomUUID().toString
   val file2UUID = UUID.randomUUID().toString
   val file3UUID = UUID.randomUUID().toString
@@ -183,7 +183,8 @@ object TestUtils {
       fileIdOpt match {
         case Some(fileId) =>
           val responseBody = expectedFileStatusResponse(fileId)
-          Response.Builder.like(response)
+          Response.Builder
+            .like(response)
             .but()
             .body(responseBody)
             .build()

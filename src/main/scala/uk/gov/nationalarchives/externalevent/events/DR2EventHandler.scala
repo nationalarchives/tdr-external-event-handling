@@ -30,8 +30,9 @@ object DR2EventHandler {
     s3Utils.listAllObjectsWithPrefix(bucket, ev.assetId).map(_.key).foreach { key =>
       Try(s3Utils.addObjectTags(bucket, key, tags).attempt.unsafeRunSync() match {
         case Left(err) => logger.log(s"Error adding tags to $key: ${err.getMessage}", LogLevel.ERROR)
-        case Right(_)  => logger.log(s"Tags added successfully to $key", LogLevel.INFO)
-          if (!key.endsWith(METADATA_SUFFIX)) { 
+        case Right(_)  =>
+          logger.log(s"Tags added successfully to $key", LogLevel.INFO)
+          if (!key.endsWith(METADATA_SUFFIX)) {
             key.split("/").lastOption.foreach(fileId => updateFileStatus(fileId, tags.head._1, tags.head._2, doUpdate))
           }
       }).recover { case e: Exception =>
@@ -41,7 +42,7 @@ object DR2EventHandler {
   }
 
   private def updateFileStatus(assetId: String, statusType: String, statusValue: String, doUpdate: Boolean)(implicit logger: LambdaLogger): amfs.Data = {
-    if(doUpdate) {
+    if (doUpdate) {
       implicit val ec: ExecutionContext = ExecutionContext.global
       logger.log(s"Updating file status for asset $assetId with type $statusType and value $statusValue", LogLevel.INFO)
       val graphQlApi: GraphQlApi = GraphQlApi(config)(logger)

@@ -90,8 +90,8 @@ object LambdaRunner extends App {
     override def log(message: String, logLevel: LogLevel): Unit = {
       logLevel match {
         case LogLevel.DEBUG => logger.debug(message)
-        case LogLevel.INFO => logger.info(message)
-        case LogLevel.WARN => logger.warn(message)
+        case LogLevel.INFO  => logger.info(message)
+        case LogLevel.WARN  => logger.warn(message)
         case LogLevel.ERROR => logger.error(message)
         case LogLevel.TRACE => logger.trace(message)
       }
