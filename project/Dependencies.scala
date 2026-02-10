@@ -5,7 +5,7 @@ object Dependencies {
   private val awsUtilsVersion = "0.1.317"
   private val mockitoScalaVersion = "2.0.0"
 
-  lazy val authUtils = "uk.gov.nationalarchives" %% "tdr-auth-utils" % "0.0.271"
+  lazy val authUtils = "uk.gov.nationalarchives" %% "tdr-auth-utils" % "0.0.272"
   lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % awsUtilsVersion
   lazy val ssmUtils = "uk.gov.nationalarchives" %% "ssm-utils" % awsUtilsVersion
   lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.269"
