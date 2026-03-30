@@ -21,7 +21,7 @@ permissions:
   contents: write
 jobs:
   deploy:
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@b6ba669dcee7fd4ac089c2e9fb234c48ddd93ab5 # v0.0.15
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@b6c9c07143225e2473579be26914683efd719ef6 # v0.0.23
     with:
       lambda-name: external-events-handler
       deployment-package: external-event-handling.jar
