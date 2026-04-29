@@ -101,8 +101,7 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
     }
   }
 
-  "DR2EventHandler" should "send file status updates to the API for all files except metadata" in {
-    val files = List(file1UUID, file2UUID, file3UUID)
+  "DR2EventHandler" should "send file status updates to the API for asset" in {
     mockS3ListResponse(prefix = prefixUUID, files = List(file1UUID, file2UUID, file3UUID))
     mockS3GetTaggingResponse()
     mockS3PutResponse()
@@ -112,8 +111,7 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
 
     val serveEvents = wiremockGraphql.getAllServeEvents.asScala
     val fileStatusUpdates = serveEvents.filter(_.getRequest.getBodyAsString.contains("addMultipleFileStatuses"))
-    fileStatusUpdates.size should be(3)
-    files.foreach(file => fileStatusUpdates.count(_.getRequest.getBodyAsString.contains(file)) should be(1))
+    fileStatusUpdates.size should be(1)
   }
 
   def runEventHandler(eventType: String, updateFileStatus: Boolean = false): DR2EventDecoder.DR2Event = {

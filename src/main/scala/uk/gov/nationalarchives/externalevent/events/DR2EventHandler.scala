@@ -32,8 +32,8 @@ object DR2EventHandler {
         case Left(err) => logger.log(s"Error adding tags to $key: ${err.getMessage}", LogLevel.ERROR)
         case Right(_)  =>
           logger.log(s"Tags added successfully to $key", LogLevel.INFO)
-          if (!key.endsWith(METADATA_SUFFIX)) {
-            key.split("/").lastOption.foreach(fileId => updateFileStatus(fileId, tags.head._1, tags.head._2, doUpdate))
+          if (key.endsWith(METADATA_SUFFIX)) {
+            updateFileStatus(ev.assetId, tags.head._1, tags.head._2, doUpdate)
           }
       }).recover { case e: Exception =>
         logger.log(s"An error occurred while adding tags to $key: ${e.getMessage}", LogLevel.ERROR)
