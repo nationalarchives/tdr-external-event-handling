@@ -1,15 +1,17 @@
 package uk.gov.nationalarchives.externalevent.events
 
-import uk.gov.nationalarchives.externalevent.decoders.DR2EventDecoder.DR2Event
-import com.typesafe.config.{Config, ConfigFactory}
-import uk.gov.nationalarchives.aws.utils.s3.{S3Clients, S3Utils}
 import cats.effect.unsafe.implicits.global
 import com.amazonaws.services.lambda.runtime.LambdaLogger
 import com.amazonaws.services.lambda.runtime.logging.LogLevel
-import uk.gov.nationalarchives.externalevent.GraphQlApi
+import com.typesafe.config.{Config, ConfigFactory}
 import graphql.codegen.AddMultipleFileStatuses.{addMultipleFileStatuses => amfs}
+import uk.gov.nationalarchives.aws.utils.s3.{S3Clients, S3Utils}
+import uk.gov.nationalarchives.externalevent.GraphQlApi
+import uk.gov.nationalarchives.externalevent.decoders.DR2EventDecoder.DR2Event
+import uk.gov.nationalarchives.tdr.common.utils.objectkeycontext.Context
+import uk.gov.nationalarchives.tdr.common.utils.objectkeycontext.ObjectTypes.Metadata
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 object DR2EventHandler {
@@ -19,7 +21,6 @@ object DR2EventHandler {
   private val s3Utils = S3Utils(S3Clients.s3Async(config.getString("s3.endpoint")))
   private val ingestKey = config.getString("tags.dr2IngestKey")
   private val ingestValue = config.getString("tags.dr2IngestValue")
-  private val METADATA_SUFFIX = ".metadata"
 
   def handleEvent(ev: DR2Event, doUpdate: Boolean = config.getBoolean("allowFileStatusUpdate"))(implicit logger: LambdaLogger): Unit = {
     val tags = ev.messageType match {
@@ -28,12 +29,13 @@ object DR2EventHandler {
     }
 
     s3Utils.listAllObjectsWithPrefix(bucket, ev.assetId).map(_.key).foreach { key =>
+      val objectContext = Context.objectKeyParser(key, bucket)
       Try(s3Utils.addObjectTags(bucket, key, tags).attempt.unsafeRunSync() match {
         case Left(err) => logger.log(s"Error adding tags to $key: ${err.getMessage}", LogLevel.ERROR)
         case Right(_)  =>
           logger.log(s"Tags added successfully to $key", LogLevel.INFO)
-          if (key.endsWith(METADATA_SUFFIX)) {
-            updateFileStatus(ev.assetId, tags.head._1, tags.head._2, doUpdate)
+          if (objectContext.objectType.get == Metadata) {
+            updateFileStatus(objectContext.assetId.get.toString, tags.head._1, tags.head._2, doUpdate)
           }
       }).recover { case e: Exception =>
         logger.log(s"An error occurred while adding tags to $key: ${e.getMessage}", LogLevel.ERROR)
