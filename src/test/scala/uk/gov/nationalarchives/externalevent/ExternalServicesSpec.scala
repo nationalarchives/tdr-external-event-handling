@@ -48,7 +48,7 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
   }
 
   def mockS3ListResponse(prefix: String, files: List[String]): StubMapping = {
-    val fullKeys = if (prefix.isEmpty) files else files.map(f => s"$prefix/$f") ++ Seq(s"$prefix/$prefix.metadata")
+    val fullKeys = if (prefix.isEmpty) files else files.map(f => s"$prefix/$f") ++ Seq(s"$prefix.metadata")
     val listResponseXml =
       s"""<?xml version="1.0" encoding="UTF-8"?>
          |<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
