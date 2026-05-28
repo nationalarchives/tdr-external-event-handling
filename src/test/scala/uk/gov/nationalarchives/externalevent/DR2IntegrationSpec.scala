@@ -58,7 +58,12 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
     graphqlOkJson()
     val ev = runEventHandler(standardDR2Message)
 
-    (files ++ Seq(s"$prefixUUID.metadata")).foreach { file =>
+    wiremockS3.verify(
+      putRequestedFor(urlMatching(s"/${ev.assetId}.metadata\\?tagging"))
+        .withRequestBody(equalToXml(expectedPutTagsRequestXml))
+    )
+
+    files.foreach { file =>
       wiremockS3.verify(
         putRequestedFor(urlMatching(s"/${ev.assetId}/$file\\?tagging"))
           .withRequestBody(equalToXml(expectedPutTagsRequestXml))
@@ -75,7 +80,12 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
     graphqlOkJson()
     val ev = runEventHandler(nonStandardDR2Message)
 
-    (files ++ Seq(s"$prefixUUID.metadata")).foreach { file =>
+    wiremockS3.verify(
+      putRequestedFor(urlMatching(s"/${ev.assetId}.metadata\\?tagging"))
+        .withRequestBody(equalToXml(expectedPutTagsRequestXml))
+    )
+
+    files.foreach { file =>
       wiremockS3.verify(
         putRequestedFor(urlMatching(s"/${ev.assetId}/$file\\?tagging"))
           .withRequestBody(equalToXml(expectedPutTagsRequestXml))
@@ -93,7 +103,12 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
 
     val ev = runEventHandler(incorrectDR2MessageType)
 
-    (files ++ Seq(s"$prefixUUID.metadata")).foreach { file =>
+    wiremockS3.verify(
+      putRequestedFor(urlMatching(s"/${ev.assetId}.metadata\\?tagging"))
+        .withRequestBody(equalToXml(unrecognisedPutTagsRequestXml(ev.messageType)))
+    )
+
+    files.foreach { file =>
       wiremockS3.verify(
         putRequestedFor(urlMatching(s"/${ev.assetId}/$file\\?tagging"))
           .withRequestBody(equalToXml(unrecognisedPutTagsRequestXml(ev.messageType)))
