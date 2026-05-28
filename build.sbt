@@ -24,7 +24,8 @@ lazy val root = (project in file("."))
       scalaTest % Test,
       wiremock % Test,
       mockitoScala % Test,
-      mockitoScalaTest % Test
+      mockitoScalaTest % Test,
+      tdrObjectKeyContext
     )
   )
 
