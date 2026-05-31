@@ -2,10 +2,10 @@ import sbt.*
 
 object Dependencies {
   private val circeVersion = "0.14.15"
-  private val awsUtilsVersion = "0.1.330"
+  private val awsUtilsVersion = "0.1.331"
   private val mockitoScalaVersion = "2.2.1"
 
-  lazy val authUtils = "uk.gov.nationalarchives" %% "tdr-auth-utils" % "0.0.288"
+  lazy val authUtils = "uk.gov.nationalarchives" %% "tdr-auth-utils" % "0.0.289"
   lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % awsUtilsVersion
   lazy val ssmUtils = "uk.gov.nationalarchives" %% "ssm-utils" % awsUtilsVersion
   lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.302"
@@ -23,5 +23,5 @@ object Dependencies {
   lazy val wiremock = "com.github.tomakehurst" % "wiremock" % "3.0.1"
   lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
   lazy val mockitoScalaTest = "org.mockito" %% "mockito-scala-scalatest" % mockitoScalaVersion
-  lazy val tdrObjectKeyContext = "uk.gov.nationalarchives" %% "tdr-object-key-context" % "0.0.19"
+  lazy val tdrObjectKeyContext = "uk.gov.nationalarchives" %% "tdr-object-key-context" % "0.0.27"
 }
