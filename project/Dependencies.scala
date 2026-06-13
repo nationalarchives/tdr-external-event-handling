@@ -2,7 +2,7 @@ import sbt.*
 
 object Dependencies {
   private val circeVersion = "0.14.15"
-  private val awsUtilsVersion = "0.1.332"
+  private val awsUtilsVersion = "0.1.334"
   private val mockitoScalaVersion = "2.2.1"
 
   lazy val authUtils = "uk.gov.nationalarchives" %% "tdr-auth-utils" % "0.0.291"
@@ -23,5 +23,5 @@ object Dependencies {
   lazy val wiremock = "com.github.tomakehurst" % "wiremock" % "3.0.1"
   lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
   lazy val mockitoScalaTest = "org.mockito" %% "mockito-scala-scalatest" % mockitoScalaVersion
-  lazy val tdrObjectKeyContext = "uk.gov.nationalarchives" %% "tdr-object-key-context" % "0.0.30"
+  lazy val tdrObjectKeyContext = "uk.gov.nationalarchives" %% "tdr-object-key-context" % "0.0.31"
 }
