@@ -1,7 +1,7 @@
 import sbt.*
 
 object Dependencies {
-  private val circeVersion = "0.14.15"
+  private val circeVersion = "0.14.16"
   private val awsUtilsVersion = "0.1.336"
   private val mockitoScalaVersion = "2.2.1"
 
