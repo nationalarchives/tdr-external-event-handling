@@ -9,7 +9,7 @@ permissions: {}
 jobs:
   pre-deploy:
     permissions: { contents: write, id-token: write }
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@8f8b90556173b43554c22d6b5f192fe9f26ad8ab # v0.0.36
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@f318ce8a5d99c08b1235663f97fdb1b35844674e # v0.0.39
     with:
       lambda-name: external-events-handler
       repo-name: tdr-external-event-handling
@@ -24,7 +24,7 @@ jobs:
     needs: pre-deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
       - run: gh workflow run deploy.yml -f environment=intg -f to-deploy=${NEXT_VERSION}
