@@ -45,3 +45,6 @@ lazy val root = (project in file("."))
 }
 
 (assembly / assemblyJarName) := "external-event-handling.jar"
+(assembly / assemblyOutputPath) := Def.uncached{
+  baseDirectory.value / "target" / "scala-2.13" / (assembly / assemblyJarName).value
+}
