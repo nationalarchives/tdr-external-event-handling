@@ -4,6 +4,12 @@ ThisBuild / scalaVersion := "2.13.18"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "uk.gov.nationalarchives"
 
+dependencyOverrides ++= Seq(
+  bcprov,
+  bcpkix,
+  bcutil
+)
+
 lazy val root = (project in file("."))
   .settings(
     name := "tdr-external-event-handling",
