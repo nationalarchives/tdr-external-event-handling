@@ -11,6 +11,7 @@ jobs:
     permissions: { contents: write, id-token: write }
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@e3622e3bbb9019981b3aaf6b278b2fce0c7d812b # v0.0.40
     with:
+      java-version: '17'
       lambda-name: external-events-handler
       repo-name: tdr-external-event-handling
       artifact-name: external-event-handling
