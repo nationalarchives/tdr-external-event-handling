@@ -24,7 +24,7 @@ object Dependencies {
   lazy val wiremock = "com.github.tomakehurst" % "wiremock" % "3.0.1"
   lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
   lazy val mockitoScalaTest = "org.mockito" %% "mockito-scala-scalatest" % mockitoScalaVersion
-  lazy val tdrObjectKeyContext = "uk.gov.nationalarchives" %% "tdr-object-key-context" % "0.0.37"
+  lazy val tdrObjectKeyContext = "uk.gov.nationalarchives" %% "tdr-object-key-context" % "0.0.39"
   lazy val bcprov = "org.bouncycastle" % "bcprov-jdk18on" % bouncyCastleVersion
   lazy val bcpkix = "org.bouncycastle" % "bcpkix-jdk18on" % bouncyCastleVersion
   lazy val bcutil = "org.bouncycastle" % "bcutil-jdk18on" % bouncyCastleVersion
