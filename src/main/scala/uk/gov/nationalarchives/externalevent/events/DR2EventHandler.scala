@@ -9,7 +9,7 @@ import uk.gov.nationalarchives.aws.utils.s3.{S3Clients, S3Utils}
 import uk.gov.nationalarchives.externalevent.GraphQlApi
 import uk.gov.nationalarchives.externalevent.decoders.DR2EventDecoder.DR2Event
 import uk.gov.nationalarchives.tdr.common.utils.objectkeycontext.Context
-import uk.gov.nationalarchives.tdr.common.utils.objectkeycontext.ObjectTypes.Metadata
+import uk.gov.nationalarchives.tdr.common.utils.objectkeycontext.ObjectTypes.{Metadata, Record}
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try
@@ -34,8 +34,8 @@ object DR2EventHandler {
         case Left(err) => logger.log(s"Error adding tags to $key: ${err.getMessage}", LogLevel.ERROR)
         case Right(_)  =>
           logger.log(s"Tags added successfully to $key", LogLevel.INFO)
-          if (objectContext.objectType.get == Metadata) {
-            updateFileStatus(objectContext.assetId.get.toString, tags.head._1, tags.head._2, doUpdate)
+          if (objectContext.objectType.get == Record) {
+            updateFileStatus(objectContext.fileId.get.toString, tags.head._1, tags.head._2, doUpdate)
           }
       }).recover { case e: Exception =>
         logger.log(s"An error occurred while adding tags to $key: ${e.getMessage}", LogLevel.ERROR)
