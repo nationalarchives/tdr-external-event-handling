@@ -9,7 +9,7 @@ import uk.gov.nationalarchives.aws.utils.s3.{S3Clients, S3Utils}
 import uk.gov.nationalarchives.externalevent.GraphQlApi
 import uk.gov.nationalarchives.externalevent.decoders.DR2EventDecoder.DR2Event
 import uk.gov.nationalarchives.tdr.common.utils.objectkeycontext.Context
-import uk.gov.nationalarchives.tdr.common.utils.objectkeycontext.ObjectTypes.{Metadata, Record}
+import uk.gov.nationalarchives.tdr.common.utils.objectkeycontext.ObjectTypes.Record
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try
