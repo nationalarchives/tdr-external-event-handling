@@ -6,7 +6,7 @@ object Dependencies {
   private val mockitoScalaVersion = "2.2.3"
   private lazy val bouncyCastleVersion = "1.85"
 
-  lazy val authUtils = "uk.gov.nationalarchives" %% "tdr-auth-utils" % "0.0.295"
+  lazy val authUtils = "uk.gov.nationalarchives" %% "tdr-auth-utils" % "0.0.296"
   lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % awsUtilsVersion
   lazy val ssmUtils = "uk.gov.nationalarchives" %% "ssm-utils" % awsUtilsVersion
   lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.305"
@@ -23,7 +23,7 @@ object Dependencies {
   lazy val wiremock = "com.github.tomakehurst" % "wiremock" % "3.0.1"
   lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
   lazy val mockitoScalaTest = "org.mockito" %% "mockito-scala-scalatest" % mockitoScalaVersion
-  lazy val tdrObjectKeyContext = "uk.gov.nationalarchives" %% "tdr-object-key-context" % "0.0.40"
+  lazy val tdrObjectKeyContext = "uk.gov.nationalarchives" %% "tdr-object-key-context" % "0.0.41"
   lazy val bcprov = "org.bouncycastle" % "bcprov-jdk18on" % bouncyCastleVersion
   lazy val bcpkix = "org.bouncycastle" % "bcpkix-jdk18on" % bouncyCastleVersion
   lazy val bcutil = "org.bouncycastle" % "bcutil-jdk18on" % bouncyCastleVersion
