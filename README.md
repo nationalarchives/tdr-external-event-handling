@@ -13,17 +13,22 @@ On `preserve.digital.asset.ingest.complete`, the handler adds `PreserveDigitalAs
 
 | Bucket configuration | Environment variable | Object key |
 | --- | --- | --- |
-| `s3.dirtyBucket` | `DIRTY_BUCKET` | `{UserId}/{ConsignmentId}/{fileId}`, or `{UserId}/{AssetSource}/{ConsignmentId}/{fileId}` when `AssetSource` is present |
+| `s3.dirtyBucket` | `DIRTY_BUCKET` | `{UserId}/{ConsignmentId}/{fileId}` for ordinary uploads |
+| `s3.dirtyBucket` (SharePoint) | `DIRTY_BUCKET` | `{UserId}/{ConsignmentId}/{AssetSource}/metadata/{UploadMatchId}` and the same key with `.metadata` appended |
 | `s3.cleanBucket` | `CLEAN_BUCKET` | `{ConsignmentId}/{fileId}` |
 | `s3.quarantineBucket` | `QUARANTINE_BUCKET` | `{ConsignmentId}/{fileId}` |
 
-Bucket defaults target integration; set all three variables for the deployed environment. The contextual tag names default to `ConsignmentId`, `UserId`, and `AssetSource` and can be overridden with `CONSIGNMENT_ID_TAG`, `USER_ID_TAG`, and `ASSET_SOURCE_TAG`, matching the consignment export configuration.
+Bucket defaults target integration; set all three variables for the deployed environment. The contextual tag names default to `ConsignmentId`, `UserId`, `AssetSource`, and `UploadMatchId` and can be overridden with `CONSIGNMENT_ID_TAG`, `USER_ID_TAG`, `ASSET_SOURCE_TAG`, and `UPLOAD_MATCH_ID_TAG`, matching the consignment export configuration.
 
 Missing or empty consignment/user tags cause a warning and skip upstream tagging for that record; export tagging and file-status updates continue. An absent upstream object (`NoSuchKey`) is logged as a warning. Other upstream S3 errors are logged as errors, and processing continues with the remaining copies. These logged failures do not trigger SQS retries.
 
+When `AssetSource` is present, the handler uses SharePoint dirty keys with the literal `metadata` path segment. A missing or empty `UploadMatchId` warns and skips only the dirty targets; clean/quarantine tagging and file-status updates continue. The file ID is never substituted for a missing match ID.
+
 The Lambda role needs `s3:GetObjectTagging` and `s3:PutObjectTagging` on objects in all three upstream buckets, in addition to its existing export permissions. The corresponding environment variables and permissions are configured in `tdr-terraform-environments/root_external_event_handling.tf` and `templates/iam_policy/external_event_handler_lambda_policy.json.tpl`. Contextual tagging must also be enabled in consignment export (`BLOCK_ADD_CONTEXT_TAGGING=false`) for upstream tagging to work.
 
-Metadata sidecars have no upstream record copy and are only tagged in the export bucket. BagIt packages in `tdr-consignment-export-{env}` are excluded (TDRD-1758).
+Each exported record triggers tagging of both its SharePoint dirty digital object and dirty metadata sidecar. Processing the exported sidecar itself only tags that export object, avoiding duplicate upstream processing. Ordinary uploads have no dirty sidecar target. BagIt packages in `tdr-consignment-export-{env}` are excluded (TDRD-1758).
+
+Deploy the export producer and configuration before relying on SharePoint upstream tagging. Already-exported objects need their `UploadMatchId` tags backfilled separately; updating the exporter does not change existing objects.
 
 ## Adding new event types
 There are two main steps to adding a new event type:

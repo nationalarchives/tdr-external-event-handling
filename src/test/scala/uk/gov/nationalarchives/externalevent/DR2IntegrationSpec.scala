@@ -25,6 +25,7 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
   private val consignmentTag = config.getString("tags.consignmentId")
   private val userTag = config.getString("tags.userId")
   private val sourceTag = config.getString("tags.assetSource")
+  private val matchIdTag = config.getString("tags.uploadMatchId")
   private val consignmentId = UUID.randomUUID().toString
   private val userId = UUID.randomUUID().toString
   private val contextTags = Map(consignmentTag -> consignmentId, userTag -> userId)
@@ -152,9 +153,19 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
     "DR2EventHandler" should s"tag upstream record copies and preserve their tags with asset source $source" in {
       val files = List(file1UUID, file2UUID)
       val exportTags = contextTags ++ source.map(sourceTag -> _)
+      val matchIds = files.map(file => file -> UUID.randomUUID().toString).toMap
       mockS3ListResponse(prefixUUID, files)
       mockS3GetTaggingResponse(Map("ExistingTag" -> "existing-value"))
       mockS3GetTaggingResponse(exportTags, Some(exportBucket))
+      files.foreach { file =>
+        val recordTags = exportTags ++ source.map(_ => matchIdTag -> matchIds(file))
+        val tagSet = recordTags.map { case (key, value) => s"<Tag><Key>$key</Key><Value>$value</Value></Tag>" }.mkString
+        wiremockS3.stubFor(
+          get(urlEqualTo(s"/$prefixUUID/$file?tagging"))
+            .withHeader("Host", equalTo(s"$exportBucket.localhost:8003"))
+            .willReturn(ok(s"<Tagging><TagSet>$tagSet</TagSet></Tagging>").withHeader("Content-Type", "application/xml"))
+        )
+      }
       mockS3PutResponse()
       authOk()
       graphqlOkJson()
@@ -162,8 +173,14 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
       runEventHandler(standardDR2Message, updateFileStatus = true)
 
       files.foreach { file =>
-        val dirtyKey = (List(userId) ++ source ++ List(consignmentId, file)).mkString("/")
-        List(dirtyBucket -> dirtyKey, cleanBucket -> s"$consignmentId/$file", quarantineBucket -> s"$consignmentId/$file").foreach {
+        val dirtyKeys = source match {
+          case Some(value) =>
+            val key = s"$userId/$consignmentId/$value/metadata/${matchIds(file)}"
+            List(key, s"$key.metadata")
+          case None => List(s"$userId/$consignmentId/$file")
+        }
+        val targets = dirtyKeys.map(dirtyBucket -> _) ++ List(cleanBucket -> s"$consignmentId/$file", quarantineBucket -> s"$consignmentId/$file")
+        targets.foreach {
           case (bucket, key) =>
             wiremockS3.verify(
               1,
@@ -182,8 +199,7 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
             .withRequestBody(matchingXPath(tagWithValue(userTag, userId)))
         )
       }
-      // Only exported records and the sidecar, plus three upstream copies per record.
-      wiremockS3.verify(9, putRequestedFor(urlMatching(".*\\?tagging")))
+      wiremockS3.verify(if (source.isDefined) 11 else 9, putRequestedFor(urlMatching(".*\\?tagging")))
       wiremockS3.verify(
         putRequestedFor(urlEqualTo(s"/$prefixUUID.metadata?tagging"))
           .withHeader("Host", equalTo(s"$exportBucket.localhost:8003"))
@@ -192,6 +208,32 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
       )
       val fileStatusUpdates = wiremockGraphql.getAllServeEvents.asScala.filter(_.getRequest.getBodyAsString.contains("addMultipleFileStatuses"))
       fileStatusUpdates.size should be(files.size)
+    }
+  }
+
+  for (matchId <- List(None, Some(""))) {
+    "DR2EventHandler" should s"skip only SharePoint dirty objects when UploadMatchId is $matchId" in {
+      val logger = mock[LambdaLogger]
+      mockS3ListResponse(prefixUUID, List(file1UUID))
+      mockS3GetTaggingResponse()
+      mockS3GetTaggingResponse(contextTags ++ Map(sourceTag -> "SharePoint") ++ matchId.map(matchIdTag -> _), Some(exportBucket))
+      mockS3PutResponse()
+      authOk()
+      graphqlOkJson()
+
+      runEventHandler(standardDR2Message, updateFileStatus = true, logger = logger)
+
+      wiremockS3.verify(0, putRequestedFor(urlMatching(".*\\?tagging")).withHeader("Host", equalTo(s"$dirtyBucket.localhost:8003")))
+      List(cleanBucket, quarantineBucket).foreach { bucket =>
+        wiremockS3.verify(
+          1,
+          putRequestedFor(urlEqualTo(s"/$consignmentId/$file1UUID?tagging"))
+            .withHeader("Host", equalTo(s"$bucket.localhost:8003"))
+        )
+      }
+      wiremockS3.verify(4, putRequestedFor(urlMatching(".*\\?tagging")))
+      verify(logger).log(contains(s"missing $matchIdTag"), eqTo(LogLevel.WARN))
+      wiremockGraphql.getAllServeEvents.asScala.count(_.getRequest.getBodyAsString.contains("addMultipleFileStatuses")) should be(1)
     }
   }
 

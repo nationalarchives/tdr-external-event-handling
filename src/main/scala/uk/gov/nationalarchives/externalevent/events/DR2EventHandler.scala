@@ -27,6 +27,7 @@ object DR2EventHandler {
   private val consignmentIdTag = config.getString("tags.consignmentId")
   private val userIdTag = config.getString("tags.userId")
   private val assetSourceTag = config.getString("tags.assetSource")
+  private val uploadMatchIdTag = config.getString("tags.uploadMatchId")
 
   def handleEvent(ev: DR2Event, doUpdate: Boolean = config.getBoolean("allowFileStatusUpdate"))(implicit logger: LambdaLogger): Unit = {
     val tags = ev.messageType match {
@@ -59,12 +60,24 @@ object DR2EventHandler {
       (consignmentId, userId) match {
         case (Some(consignment), Some(user)) =>
           val upstreamKey = s"$consignment/$fileId"
-          val dirtyKey = (List(user) ++ contextTags.get(assetSourceTag).filter(_.nonEmpty) ++ List(consignment, fileId)).mkString("/")
-          List(
-            config.getString("s3.dirtyBucket") -> dirtyKey,
+          val dirtyKeys = contextTags.get(assetSourceTag).filter(_.nonEmpty) match {
+            case None => List(s"$user/$consignment/$fileId")
+            case Some(source) =>
+              contextTags.get(uploadMatchIdTag).filter(_.nonEmpty) match {
+                case Some(matchId) =>
+                  val key = s"$user/$consignment/$source/metadata/$matchId"
+                  List(key, s"$key.metadata")
+                case None =>
+                  logger.log(s"Skipping dirty bucket tagging for $exportKey: missing $uploadMatchIdTag tag", LogLevel.WARN)
+                  Nil
+              }
+          }
+          val dirtyTargets = dirtyKeys.map(config.getString("s3.dirtyBucket") -> _)
+          val targets = dirtyTargets ++ List(
             config.getString("s3.cleanBucket") -> upstreamKey,
             config.getString("s3.quarantineBucket") -> upstreamKey
-          ).foreach { case (upstreamBucket, key) =>
+          )
+          targets.foreach { case (upstreamBucket, key) =>
             tagUpstreamObject(upstreamBucket, key, tags)
           }
         case _ =>
