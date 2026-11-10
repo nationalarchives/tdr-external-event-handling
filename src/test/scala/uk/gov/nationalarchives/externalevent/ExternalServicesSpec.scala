@@ -61,10 +61,12 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
         .willReturn(ok(listResponseXml).withHeader("Content-Type", "application/xml"))
     )
   }
-  def mockS3GetTaggingResponse(): StubMapping = {
+  def mockS3GetTaggingResponse(tags: Map[String, String] = Map.empty, bucket: Option[String] = None): StubMapping = {
+    val request = get(urlMatching(".*\\?tagging"))
+    bucket.foreach(name => request.withHeader("Host", equalTo(s"$name.localhost:8003")))
+    val tagSet = tags.map { case (key, value) => s"<Tag><Key>$key</Key><Value>$value</Value></Tag>" }.mkString
     wiremockS3.stubFor(
-      get(urlMatching(".*\\?tagging"))
-        .willReturn(ok("<Tagging></Tagging>").withHeader("Content-Type", "application/xml"))
+      request.willReturn(ok(s"<Tagging><TagSet>$tagSet</TagSet></Tagging>").withHeader("Content-Type", "application/xml"))
     )
   }
 

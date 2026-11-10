@@ -5,11 +5,30 @@ import io.circe.parser.decode
 import uk.gov.nationalarchives.externalevent.decoders._
 import uk.gov.nationalarchives.externalevent.events._
 import com.github.tomakehurst.wiremock.client.WireMock._
+import com.amazonaws.services.lambda.runtime.LambdaLogger
+import com.amazonaws.services.lambda.runtime.logging.LogLevel
+import com.typesafe.config.ConfigFactory
+import org.mockito.MockitoSugar.{mock, verify}
+import org.mockito.ArgumentMatchers.{contains, eq => eqTo}
 
+import java.util.UUID
 import scala.jdk.CollectionConverters.ListHasAsScala
 import TestUtils._
 
 class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
+
+  private val config = ConfigFactory.load()
+  private val exportBucket = config.getString("s3.standardBucket")
+  private val dirtyBucket = config.getString("s3.dirtyBucket")
+  private val cleanBucket = config.getString("s3.cleanBucket")
+  private val quarantineBucket = config.getString("s3.quarantineBucket")
+  private val consignmentTag = config.getString("tags.consignmentId")
+  private val userTag = config.getString("tags.userId")
+  private val sourceTag = config.getString("tags.assetSource")
+  private val matchIdTag = config.getString("tags.uploadMatchId")
+  private val consignmentId = UUID.randomUUID().toString
+  private val userId = UUID.randomUUID().toString
+  private val contextTags = Map(consignmentTag -> consignmentId, userTag -> userId)
 
   "Lambda" should "correctly handle a single DR2 message" in {
     mockS3ListResponse(prefix = prefixUUID, files = List(file1UUID, file2UUID, file3UUID))
@@ -130,11 +149,160 @@ class DR2IntegrationSpec extends ExternalServicesSpec with Matchers {
     fileStatusUpdates.size should be(fileIds.size)
   }
 
-  def runEventHandler(eventType: String, updateFileStatus: Boolean = false): DR2EventDecoder.DR2Event = {
+  for (source <- List(None, Some("SharePoint"))) {
+    "DR2EventHandler" should s"tag upstream record copies and preserve their tags with asset source $source" in {
+      val files = List(file1UUID, file2UUID)
+      val exportTags = contextTags ++ source.map(sourceTag -> _)
+      val matchIds = files.map(file => file -> UUID.randomUUID().toString).toMap
+      mockS3ListResponse(prefixUUID, files)
+      mockS3GetTaggingResponse(Map("ExistingTag" -> "existing-value"))
+      mockS3GetTaggingResponse(exportTags, Some(exportBucket))
+      files.foreach { file =>
+        val recordTags = exportTags ++ source.map(_ => matchIdTag -> matchIds(file))
+        val tagSet = recordTags.map { case (key, value) => s"<Tag><Key>$key</Key><Value>$value</Value></Tag>" }.mkString
+        wiremockS3.stubFor(
+          get(urlEqualTo(s"/$prefixUUID/$file?tagging"))
+            .withHeader("Host", equalTo(s"$exportBucket.localhost:8003"))
+            .willReturn(ok(s"<Tagging><TagSet>$tagSet</TagSet></Tagging>").withHeader("Content-Type", "application/xml"))
+        )
+      }
+      mockS3PutResponse()
+      authOk()
+      graphqlOkJson()
+
+      runEventHandler(standardDR2Message, updateFileStatus = true)
+
+      files.foreach { file =>
+        val dirtyKeys = source match {
+          case Some(value) =>
+            val key = s"$userId/$consignmentId/$value/metadata/${matchIds(file)}"
+            List(key, s"$key.metadata")
+          case None => List(s"$userId/$consignmentId/$file")
+        }
+        val targets = dirtyKeys.map(dirtyBucket -> _) ++ List(cleanBucket -> s"$consignmentId/$file", quarantineBucket -> s"$consignmentId/$file")
+        targets.foreach {
+          case (bucket, key) =>
+            wiremockS3.verify(
+              1,
+              putRequestedFor(urlEqualTo(s"/$key?tagging"))
+                .withHeader("Host", equalTo(s"$bucket.localhost:8003"))
+                .withRequestBody(matchingXPath(tagWithValue("PreserveDigitalAssetIngest", "Complete")))
+                .withRequestBody(matchingXPath(tagWithValue("ExistingTag", "existing-value")))
+                .withRequestBody(notMatching(".*TestConsignmentId.*"))
+            )
+        }
+        wiremockS3.verify(
+          putRequestedFor(urlEqualTo(s"/$prefixUUID/$file?tagging"))
+            .withHeader("Host", equalTo(s"$exportBucket.localhost:8003"))
+            .withRequestBody(matchingXPath(tagWithValue("PreserveDigitalAssetIngest", "Complete")))
+            .withRequestBody(matchingXPath(tagWithValue(consignmentTag, consignmentId)))
+            .withRequestBody(matchingXPath(tagWithValue(userTag, userId)))
+        )
+      }
+      wiremockS3.verify(if (source.isDefined) 11 else 9, putRequestedFor(urlMatching(".*\\?tagging")))
+      wiremockS3.verify(
+        putRequestedFor(urlEqualTo(s"/$prefixUUID.metadata?tagging"))
+          .withHeader("Host", equalTo(s"$exportBucket.localhost:8003"))
+          .withRequestBody(matchingXPath(tagWithValue(consignmentTag, consignmentId)))
+          .withRequestBody(matchingXPath(tagWithValue(userTag, userId)))
+      )
+      val fileStatusUpdates = wiremockGraphql.getAllServeEvents.asScala.filter(_.getRequest.getBodyAsString.contains("addMultipleFileStatuses"))
+      fileStatusUpdates.size should be(files.size)
+    }
+  }
+
+  for (matchId <- List(None, Some(""))) {
+    "DR2EventHandler" should s"skip only SharePoint dirty objects when UploadMatchId is $matchId" in {
+      val logger = mock[LambdaLogger]
+      mockS3ListResponse(prefixUUID, List(file1UUID))
+      mockS3GetTaggingResponse()
+      mockS3GetTaggingResponse(contextTags ++ Map(sourceTag -> "SharePoint") ++ matchId.map(matchIdTag -> _), Some(exportBucket))
+      mockS3PutResponse()
+      authOk()
+      graphqlOkJson()
+
+      runEventHandler(standardDR2Message, updateFileStatus = true, logger = logger)
+
+      wiremockS3.verify(0, putRequestedFor(urlMatching(".*\\?tagging")).withHeader("Host", equalTo(s"$dirtyBucket.localhost:8003")))
+      List(cleanBucket, quarantineBucket).foreach { bucket =>
+        wiremockS3.verify(
+          1,
+          putRequestedFor(urlEqualTo(s"/$consignmentId/$file1UUID?tagging"))
+            .withHeader("Host", equalTo(s"$bucket.localhost:8003"))
+        )
+      }
+      wiremockS3.verify(4, putRequestedFor(urlMatching(".*\\?tagging")))
+      verify(logger).log(contains(s"missing $matchIdTag"), eqTo(LogLevel.WARN))
+      wiremockGraphql.getAllServeEvents.asScala.count(_.getRequest.getBodyAsString.contains("addMultipleFileStatuses")) should be(1)
+    }
+  }
+
+  for (missingContext <- List(Map.empty[String, String], Map(consignmentTag -> consignmentId), Map(userTag -> userId), contextTags.updated(userTag, ""))) {
+    "DR2EventHandler" should s"keep tagging exports but warn and skip upstream copies when context is incomplete: $missingContext" in {
+      val logger = mock[LambdaLogger]
+      mockS3ListResponse(prefixUUID, List(file1UUID))
+      mockS3GetTaggingResponse(missingContext)
+      mockS3PutResponse()
+
+      runEventHandler(standardDR2Message, logger = logger)
+
+      wiremockS3.verify(2, putRequestedFor(urlMatching(".*\\?tagging")).withHeader("Host", equalTo(s"$exportBucket.localhost:8003")))
+      wiremockS3.verify(2, putRequestedFor(urlMatching(".*\\?tagging")))
+      verify(logger).log(contains("missing"), eqTo(LogLevel.WARN))
+    }
+  }
+
+  "DR2EventHandler" should "not tag upstream objects for an unrecognised message type even when context is available" in {
+    mockS3ListResponse(prefixUUID, List(file1UUID))
+    mockS3GetTaggingResponse(contextTags)
+    mockS3PutResponse()
+
+    runEventHandler(incorrectDR2MessageType)
+
+    wiremockS3.verify(2, putRequestedFor(urlMatching(".*\\?tagging")).withHeader("Host", equalTo(s"$exportBucket.localhost:8003")))
+    wiremockS3.verify(2, putRequestedFor(urlMatching(".*\\?tagging")))
+  }
+
+  for (
+    (status, code, level) <- List((404, "NoSuchKey", LogLevel.WARN), (403, "AccessDenied", LogLevel.ERROR), (404, "NoSuchBucket", LogLevel.ERROR));
+    operation <- List("GET", "PUT")
+  ) {
+    "DR2EventHandler" should s"log $code from $operation and continue tagging the other upstream copies" in {
+      val logger = mock[LambdaLogger]
+      mockS3ListResponse(prefixUUID, List(file1UUID))
+      mockS3GetTaggingResponse()
+      mockS3GetTaggingResponse(contextTags, Some(exportBucket))
+      mockS3PutResponse()
+      wiremockS3.stubFor(
+        request(operation, urlMatching(".*\\?tagging"))
+          .withHeader("Host", equalTo(s"$dirtyBucket.localhost:8003"))
+          .willReturn(aResponse().withStatus(status).withHeader("Content-Type", "application/xml").withBody(s"<Error><Code>$code</Code></Error>"))
+      )
+
+      runEventHandler(standardDR2Message, logger = logger)
+
+      List(cleanBucket, quarantineBucket).foreach { bucket =>
+        wiremockS3.verify(
+          putRequestedFor(urlEqualTo(s"/$consignmentId/$file1UUID?tagging"))
+            .withHeader("Host", equalTo(s"$bucket.localhost:8003"))
+        )
+      }
+      wiremockS3.verify(
+        if (operation == "PUT") 1 else 0,
+        putRequestedFor(urlMatching(".*\\?tagging")).withHeader("Host", equalTo(s"$dirtyBucket.localhost:8003"))
+      )
+      verify(logger).log(contains(s"s3://$dirtyBucket/"), eqTo(level))
+    }
+  }
+
+  private def tagWithValue(key: String, value: String): String =
+    s"//*[local-name()='Tag'][*[local-name()='Key']='$key' and *[local-name()='Value']='$value']"
+
+  def runEventHandler(eventType: String, updateFileStatus: Boolean = false, logger: LambdaLogger = mockContext.getLogger): DR2EventDecoder.DR2Event = {
     val ev = decode[DR2EventDecoder.DR2Event](sqsMessage(eventType).getBody)
       .getOrElse(throw new RuntimeException(s"Failed to decode DR2 Event of type: $eventType"))
 
-    DR2EventHandler.handleEvent(ev, updateFileStatus)(mockContext.getLogger)
+    DR2EventHandler.handleEvent(ev, updateFileStatus)(logger)
     ev
   }
 }

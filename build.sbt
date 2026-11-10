@@ -7,7 +7,8 @@ ThisBuild / organization := "uk.gov.nationalarchives"
 dependencyOverrides ++= Seq(
   bcprov,
   bcpkix,
-  bcutil
+  bcutil,
+  nettyHandler
 )
 
 lazy val root = (project in file("."))
