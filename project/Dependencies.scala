@@ -11,7 +11,7 @@ object Dependencies {
   lazy val ssmUtils = "uk.gov.nationalarchives" %% "ssm-utils" % awsUtilsVersion
   lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.306"
   lazy val generatedGraphql = "uk.gov.nationalarchives" %% "tdr-generated-graphql" % "0.0.485"
-  lazy val awsLambdaCore = "com.amazonaws" % "aws-lambda-java-core" % "1.4.0"
+  lazy val awsLambdaCore = "com.amazonaws" % "aws-lambda-java-core" % "1.4.1"
   lazy val awsLambdaEvents = "com.amazonaws" % "aws-lambda-java-events" % "3.16.1"
   lazy val awsLambdaRuntimeClient = "com.amazonaws" % "aws-lambda-java-runtime-interface-client" % "2.12.0"
   lazy val circeCore = "io.circe" %% "circe-core" % circeVersion
