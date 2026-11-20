@@ -10,7 +10,7 @@ permissions:
   contents: write
 jobs:
   test:
-    uses: nationalarchives/tdr-github-actions/.github/workflows/tdr_test.yml@b98899c2acfaf872e0053671743a5b1284b0dab0 # v0.0.43
+    uses: nationalarchives/tdr-github-actions/.github/workflows/tdr_test.yml@5a96b84cf82bce1371168cc31cb89f88cad86763 # v0.0.53
     with:
       repo-name: tdr-external-event-handling
       java-version: ${{vars.JAVA_RUNTIME}}
