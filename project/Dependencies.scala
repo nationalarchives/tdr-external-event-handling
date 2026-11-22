@@ -2,15 +2,15 @@ import sbt.*
 
 object Dependencies {
   private val circeVersion = "0.14.17"
-  private val awsUtilsVersion = "0.1.344"
-  private val mockitoScalaVersion = "2.2.3"
+  private val awsUtilsVersion = "0.1.345"
+  private val mockitoScalaVersion = "2.2.4"
   private lazy val bouncyCastleVersion = "1.87"
 
   lazy val authUtils = "uk.gov.nationalarchives" %% "tdr-auth-utils" % "0.0.309"
   lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % awsUtilsVersion
   lazy val ssmUtils = "uk.gov.nationalarchives" %% "ssm-utils" % awsUtilsVersion
   lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.309"
-  lazy val generatedGraphql = "uk.gov.nationalarchives" %% "tdr-generated-graphql" % "0.0.497"
+  lazy val generatedGraphql = "uk.gov.nationalarchives" %% "tdr-generated-graphql" % "0.0.498"
   lazy val awsLambdaCore = "com.amazonaws" % "aws-lambda-java-core" % "1.4.1"
   lazy val awsLambdaEvents = "com.amazonaws" % "aws-lambda-java-events" % "3.16.1"
   lazy val awsLambdaRuntimeClient = "com.amazonaws" % "aws-lambda-java-runtime-interface-client" % "2.12.2"
